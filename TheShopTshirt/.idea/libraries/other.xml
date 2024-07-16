@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="other">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/library/other/flatlaf-fonts-roboto-2.137.jar!/" />
+      <root url="jar://$PROJECT_DIR$/library/other/AbsoluteLayout.jar!/" />
+      <root url="jar://$PROJECT_DIR$/library/other/flatlaf-extras-3.2.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/library/other/miglayout-swing.jar!/" />
+      <root url="jar://$PROJECT_DIR$/library/other/flatlaf-3.2.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/library/other/miglayout-core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/library/other/jsvg-1.2.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

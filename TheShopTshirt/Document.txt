@@ -1,0 +1,138 @@
+---
+# Note package
+# # app.connect: Used to connect to the database.
+# # app.model: Used to initialize classes.
+# # app.service: Used to write processing functions and queries.
+
+---
+
+# File MyDrawerBuilder.java
+
+## Purpose:
+- Defines the interface and behavior of the navigation drawer for the application.
+
+## Usage:
+- Utilizes UI components to display menu items and perform corresponding actions upon user selection.
+
+## How to run the project:
+- Configures and displays the navigation drawer within the main application.
+
+---
+
+# File Login.java
+
+## Purpose:
+- Displays the login interface for users.
+
+## Usage:
+- Enters login information, handles login processing, and displays the main interface upon successful login.
+
+## How to run the project:
+- Displays the login form and handles events when users log in.
+
+---
+
+# File Main.java
+
+## Purpose:
+- Main program of the application, initializes the interface and configures other components such as navigation drawer and tabbed pane.
+
+## Usage:
+- Initializes and displays the main interface of the application, manages tabs, and directs user actions upon login and logout.
+- Changing the theme in the main function at line FlatLightLaf.setup(); Setup FlatMacDarkLaf or FlatLightLaf interface.
+
+## How to run the project:
+- Starts and manages the main interface components of the application.
+
+---
+
+# File PanelTabbed.java
+
+## Purpose:
+- Defines and manages tabs within the application.
+
+## Usage:
+- Adds, removes, and navigates between tabs in the interface.
+
+## How to run the project:
+- Manages tabs and displays corresponding content when users select a tab.
+
+---
+
+# File TabbedForm.java
+
+## Purpose:
+- Defines basic methods for forms within tabs.
+
+## Usage:
+- Opens, closes, and refreshes forms.
+
+## How to run the project:
+- Manages and displays content of forms within the tabbed pane.
+
+---
+
+# File TabbedItem.java
+
+## Purpose:
+- Defines small tabs within the tabbed pane.
+
+## Usage:
+- Displays tab names and close buttons to close tabs.
+
+## How to run the project:
+- Manages and navigates between child tabs within the tabbed pane.
+
+---
+
+# File WindowsTabbed.java
+
+## Purpose:
+- Manages and displays tab bar and tabs within the application.
+
+## Usage:
+- Adds, removes, and switches between tabs, sets up and displays navigation bar.
+
+## How to run the project:
+- Manages and navigates between tabs in the main interface of the application.
+
+---
+
+# File FlatDarkLaf.properties
+
+## Purpose:
+- Defines properties for the Flat Dark theme interface.
+
+## Usage:
+- Configures colors and styles for components in the theme interface.
+
+## How to run the project:
+- Used to set up the Flat Dark theme interface for the entire application.
+
+---
+
+# File FlatLaf.properties
+
+## Purpose:
+- Defines properties for the FlatLaf theme interface.
+
+## Usage:
+- Configures colors, curvature, and styles for components in the theme interface.
+
+## How to run the project:
+- Used to set up the FlatLaf theme interface for the entire application.
+
+---
+
+# File FlatLightLaf.properties
+
+## Purpose:
+- Defines properties for the Flat Light theme interface.
+
+## Usage:
+- Configures colors and styles for components in the theme interface.
+
+## How to run the project:
+- Used to set up the Flat Light theme interface for the entire application.
+
+---
