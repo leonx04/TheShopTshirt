@@ -1,6 +1,5 @@
 package app.tabbed;
 
-import java.awt.Component;
 import javax.swing.JPanel;
 
 public class TabbedForm extends JPanel { // Kế thừa JPanel để tạo form với các tab
@@ -13,12 +12,7 @@ public class TabbedForm extends JPanel { // Kế thừa JPanel để tạo form 
         return true; // Trả về true khi form được đóng
     }
 
-    public void fromRefresh() { // Phương thức làm mới form
-         Component[] components = getComponents();
-        for (Component component : components) {
-            if (component instanceof TabbedItem) {
-                ((TabbedItem) component).refresh(); // Gọi phương thức refresh của TabbedItem
-            }
-        }
+   public void fromRefresh() {
+        // Phương thức mặc định, có thể để trống để ghi đè
     }
 }

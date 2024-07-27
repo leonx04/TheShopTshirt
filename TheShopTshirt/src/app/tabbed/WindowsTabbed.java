@@ -4,109 +4,151 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import raven.drawer.Drawer;
+import raven.toast.Notifications;
 
 public class WindowsTabbed {
 
-    private static WindowsTabbed instance; // Singleton instance của WindowsTabbed
-    private JMenuBar menuBar; // Thanh menu
-    private PanelTabbed panelTabbed; // Panel chứa các tab
-    private JPanel body; // Panel chính
-    private TabbedForm temp; // Biến tạm để lưu trữ form
+    private static WindowsTabbed instance;
+    private JMenuBar menuBar;
+    private PanelTabbed panelTabbed;
+    private JPanel body;
+    private TabbedForm temp;
 
-    public static WindowsTabbed getInstance() { // Phương thức lấy instance
+    public static WindowsTabbed getInstance() {
         if (instance == null) {
-            instance = new WindowsTabbed(); // Khởi tạo nếu chưa có instance
+            instance = new WindowsTabbed();
         }
-        return instance; // Trả về instance
+        return instance;
     }
 
-    public void install(JFrame frame, JPanel body) { // Phương thức cài đặt cho JFrame và panel chính
-        this.body = body; // Gán body cho biến thành viên
-        menuBar = new JMenuBar(); // Tạo thanh menu
+    public void install(JFrame frame, JPanel body) {
+        this.body = body;
+        menuBar = new JMenuBar();
         menuBar.putClientProperty(FlatClientProperties.STYLE, ""
-                + "borderColor:$TitlePane.background;" // Thiết lập màu viền
-                + "border:0,0,0,0"); // Thiết lập không viền
-        panelTabbed = new PanelTabbed(); // Tạo PanelTabbed
+                + "borderColor:$TitlePane.background;"
+                + "border:0,0,0,0");
+        panelTabbed = new PanelTabbed();
         panelTabbed.putClientProperty(FlatClientProperties.STYLE, ""
-                + "background:$TitlePane.background"); // Thiết lập màu nền
-        menuBar.add(createDrawerButton()); // Thêm nút Drawer vào thanh menu
-        menuBar.add(createScroll(panelTabbed)); // Thêm panelTabbed vào thanh menu dưới dạng cuộn
-        frame.setJMenuBar(menuBar); // Đặt thanh menu cho frame
+                + "background:$TitlePane.background");
+        menuBar.add(createDrawerButton());
+        menuBar.add(createRefreshButton());
+        menuBar.add(createScroll(panelTabbed));
+        frame.setJMenuBar(menuBar);
     }
 
-    public void showTabbed(boolean show) { // Phương thức hiển thị hoặc ẩn thanh menu
-        menuBar.setVisible(show); // Hiển thị hoặc ẩn thanh menu
+    public void showTabbed(boolean show) {
+        menuBar.setVisible(show);
         if (!show) {
-            Drawer.getInstance().closeDrawer(); // Đóng Drawer nếu ẩn thanh menu
+            Drawer.getInstance().closeDrawer();
         }
     }
 
-    private JButton createDrawerButton() { // Phương thức tạo nút Drawer
-        JButton cmd = new JButton(new FlatSVGIcon("app/svg/menu.svg", 0.9f)); // Tạo nút với icon SVG
+    private JButton createDrawerButton() {
+        JButton cmd = new JButton(new FlatSVGIcon("app/svg/menu.svg", 0.9f));
         cmd.addActionListener((ae) -> {
-            Drawer.getInstance().showDrawer(); // Hiển thị Drawer khi bấm nút
+            Drawer.getInstance().showDrawer();
         });
         cmd.putClientProperty(FlatClientProperties.STYLE, ""
-                + "borderWidth:0;" // Không viền
-                + "focusWidth:0;" // Không có đường viền khi focus
-                + "innerFocusWidth:0;" // Không có đường viền bên trong khi focus
-                + "background:null;" // Không có nền
-                + "arc:5"); // Bo góc 5 pixel
-        return cmd; // Trả về nút Drawer
+                + "borderWidth:0;"
+                + "focusWidth:0;"
+                + "innerFocusWidth:0;"
+                + "background:null;"
+                + "arc:5");
+        return cmd;
     }
 
-    private JScrollPane createScroll(Component com) { // Phương thức tạo JScrollPane
-        JScrollPane scroll = new JScrollPane(com); // Tạo JScrollPane chứa component
-        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER); // Không hiển thị thanh cuộn dọc
-        scroll.getHorizontalScrollBar().putClientProperty(FlatClientProperties.STYLE, ""
-                + "width:0"); // Thiết lập độ rộng thanh cuộn ngang là 0
-        scroll.getHorizontalScrollBar().setUnitIncrement(10); // Thiết lập đơn vị cuộn ngang là 10
-        scroll.putClientProperty(FlatClientProperties.STYLE, ""
-                + "border:0,0,0,0"); // Thiết lập không viền
-        return scroll; // Trả về JScrollPane
-    }
-
-    public void addTab(String title, TabbedForm component) { // Phương thức thêm tab
-        TabbedItem item = new TabbedItem(title, component); // Tạo TabbedItem mới
-        item.addActionListener(new ActionListener() { // Thêm ActionListener cho TabbedItem
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                showForm(item.component); // Hiển thị form khi tab được chọn
-            }
+    private JButton createRefreshButton() {
+        JButton cmd = new JButton(new FlatSVGIcon("app/svg/refresh.svg", 1.0f)); // Điều chỉnh tỷ lệ
+        cmd.addActionListener((ae) -> {
+            refreshAllTabs();
         });
-        panelTabbed.addTab(item); // Thêm TabbedItem vào panelTabbed
-        showForm(component); // Hiển thị form
-        item.setSelected(true); // Đặt tab là đã chọn
+        cmd.putClientProperty(FlatClientProperties.STYLE, ""
+                + "borderWidth:0;"
+                + "focusWidth:0;"
+                + "innerFocusWidth:0;"
+                + "background:null;"
+                + "arc:5");
+        return cmd;
     }
 
-    public void removeTab(TabbedItem tab) { // Phương thức xóa tab
-        if (tab.component.formClose()) { // Kiểm tra nếu form có thể đóng
-            if (tab.isSelected()) { // Nếu tab đang được chọn
-                body.removeAll(); // Xóa hết nội dung trong body
-                body.revalidate(); // Cập nhật lại giao diện
-                body.repaint(); // Vẽ lại giao diện
-            }
-            panelTabbed.remove(tab); // Xóa tab khỏi panelTabbed
-            panelTabbed.revalidate(); // Cập nhật lại giao diện panelTabbed
-            panelTabbed.repaint(); // Vẽ lại panelTabbed
+    private JScrollPane createScroll(Component com) {
+        JScrollPane scroll = new JScrollPane(com);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        scroll.getHorizontalScrollBar().putClientProperty(FlatClientProperties.STYLE, ""
+                + "width:0");
+        scroll.getHorizontalScrollBar().setUnitIncrement(10);
+        scroll.putClientProperty(FlatClientProperties.STYLE, ""
+                + "border:0,0,0,0");
+        return scroll;
+    }
+
+    public void addTab(String title, TabbedForm component) {
+        TabbedItem existingTab = findOpenTab(title);
+        if (existingTab != null) {
+            showForm(existingTab.component);
+            existingTab.setSelected(true);
+        } else {
+            TabbedItem item = new TabbedItem(title, component);
+            item.addActionListener((ActionEvent ae) -> {
+                showForm(item.component);
+            });
+            panelTabbed.addTab(item);
+            showForm(component);
+            item.setSelected(true);
         }
     }
 
-    public void showForm(TabbedForm component) { // Phương thức hiển thị form
-        body.removeAll(); // Xóa hết nội dung trong body
-        body.add(component); // Thêm form vào body
-        body.repaint(); // Vẽ lại body
-        body.revalidate(); // Cập nhật lại giao diện body
-        panelTabbed.repaint(); // Vẽ lại panelTabbed
-        panelTabbed.revalidate(); // Cập nhật lại giao diện panelTabbed
-        component.formOpen(); // Gọi phương thức mở form
-        temp = component; // Gán component cho biến tạm
+    public TabbedItem findOpenTab(String title) {
+        for (TabbedItem item : panelTabbed.getTabs()) {
+            if (item.getTitle().equals(title)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    public void removeTab(TabbedItem tab) {
+        if (tab.component.formClose()) {
+            if (tab.isSelected()) {
+                body.removeAll();
+                body.revalidate();
+                body.repaint();
+            }
+            panelTabbed.remove(tab);
+            panelTabbed.removeTab(tab);
+            panelTabbed.revalidate();
+            panelTabbed.repaint();
+        }
+    }
+
+    public void showForm(TabbedForm component) {
+        body.removeAll();
+        body.add(component);
+        body.repaint();
+        body.revalidate();
+        panelTabbed.repaint();
+        panelTabbed.revalidate();
+        component.formOpen();
+        temp = component;
+    }
+
+    public void refreshAllTabs() {
+        for (TabbedItem item : panelTabbed.getTabs()) {
+            item.component.fromRefresh();
+        }
+        if (temp != null) {
+            temp.fromRefresh();
+        }
+        body.revalidate();
+        body.repaint();
+        panelTabbed.revalidate();
+        panelTabbed.repaint();
+        Notifications.getInstance().show(Notifications.Type.INFO, "Đã làm mới tất cả các tab.");
     }
 }

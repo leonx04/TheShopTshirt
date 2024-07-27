@@ -39,7 +39,7 @@
                           </Group>
                       </Group>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="txtTenKichThuoc" alignment="0" pref="287" max="32767" attributes="0"/>
+                          <Component id="txtTenTT" alignment="0" pref="287" max="32767" attributes="0"/>
                           <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -54,7 +54,7 @@
               <EmptySpace min="-2" pref="17" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="txtTenKichThuoc" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="txtTenTT" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
@@ -93,7 +93,7 @@
         <Property name="text" type="java.lang.String" value="T&#xea;n ma&#x300;u s&#x103;&#x301;c:"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JTextField" name="txtTenKichThuoc">
+    <Component class="javax.swing.JTextField" name="txtTenTT">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Segoe UI" size="14" style="0"/>

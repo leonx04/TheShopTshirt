@@ -306,7 +306,7 @@ public class ProductAttributes extends TabbedForm {
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED), "Tương tác", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 1, 14))); // NOI18N
 
-        btnAddTT.setBackground(new java.awt.Color(0, 204, 51));
+        btnAddTT.setBackground(new java.awt.Color(51, 153, 255));
         btnAddTT.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         btnAddTT.setText("Thêm thuộc tính");
         btnAddTT.addActionListener(new java.awt.event.ActionListener() {
@@ -315,7 +315,7 @@ public class ProductAttributes extends TabbedForm {
             }
         });
 
-        btnUpdateTT.setBackground(new java.awt.Color(0, 153, 153));
+        btnUpdateTT.setBackground(new java.awt.Color(51, 153, 255));
         btnUpdateTT.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         btnUpdateTT.setText("Cập nhật thuộc tính");
         btnUpdateTT.addActionListener(new java.awt.event.ActionListener() {
@@ -324,7 +324,7 @@ public class ProductAttributes extends TabbedForm {
             }
         });
 
-        btnReset.setBackground(new java.awt.Color(153, 153, 153));
+        btnReset.setBackground(new java.awt.Color(51, 153, 255));
         btnReset.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         btnReset.setText("Làm mới");
         btnReset.addActionListener(new java.awt.event.ActionListener() {
@@ -333,7 +333,7 @@ public class ProductAttributes extends TabbedForm {
             }
         });
 
-        btnDeleteTT.setBackground(new java.awt.Color(255, 0, 0));
+        btnDeleteTT.setBackground(new java.awt.Color(51, 153, 255));
         btnDeleteTT.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         btnDeleteTT.setText("Xóa");
         btnDeleteTT.addActionListener(new java.awt.event.ActionListener() {
@@ -409,6 +409,11 @@ public class ProductAttributes extends TabbedForm {
         jLabel3.setText("Tìm kiếm");
 
         txtTimKiem.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        txtTimKiem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtTimKiemActionPerformed(evt);
+            }
+        });
         txtTimKiem.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txtTimKiemKeyPressed(evt);
@@ -438,7 +443,7 @@ public class ProductAttributes extends TabbedForm {
                     .addComponent(jLabel3)
                     .addComponent(txtTimKiem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(22, 22, 22)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 574, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -464,7 +469,7 @@ public class ProductAttributes extends TabbedForm {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(469, Short.MAX_VALUE))
+                .addContainerGap(682, Short.MAX_VALUE))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addContainerGap()
@@ -671,7 +676,7 @@ public class ProductAttributes extends TabbedForm {
 
         if (rdoMauSac.isSelected()) {
             if (msrs.checkTonTaiSPCT(maTT)) {
-                JOptionPane.showMessageDialog(this, "Không thể xóa thuộc tính này vì đang tồn tại trong sản phẩm chi tiết!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Không thể xóa thuộc tính này vì đang tồn tại trong sản phẩm chi tiết!");
                 return;
             }
             int del = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa màu sắc này ?"
@@ -741,6 +746,10 @@ public class ProductAttributes extends TabbedForm {
         String query = txtTimKiem.getText();
         search(query);
     }//GEN-LAST:event_txtTimKiemKeyPressed
+
+    private void txtTimKiemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTimKiemActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtTimKiemActionPerformed
 
     @Override
     public boolean formClose() {

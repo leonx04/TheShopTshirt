@@ -7,6 +7,8 @@ package app.form;
 import app.model.StaffModel;
 import app.service.StaffService;
 import app.tabbed.TabbedForm;
+import app.tabbed.WindowsTabbed;
+import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
@@ -22,12 +24,21 @@ import raven.toast.Notifications;
  */
 public class Staff extends TabbedForm {
 
-    private StaffService staffService;
+    @Override
+    public void fromRefresh() {
+        // Tải lại dữ liệu cho form 
+        initTable();
+        loadData();
+        rdoNV.setSelected(true);
+        rdoNam.setSelected(true);
+    }
+
+    private final StaffService staffService = new StaffService();
+    ;
     private DefaultTableModel tableModel;
 
     public Staff() {
         initComponents();
-        staffService = new StaffService();
         initTable();
         loadData();
         rdoNV.setSelected(true);
@@ -66,28 +77,6 @@ public class Staff extends TabbedForm {
         }
     }
 
-    private void displayStaffDetails(StaffModel staff) {
-        txtID2.setText(staff.getId());
-        txtHoTen2.setText(staff.getHoTen());
-        txtDiaChi2.setText(staff.getDiaChi());
-        txtSDT2.setText(staff.getSdt());
-        txtEmail2.setText(staff.getEmail());
-        txtNamSinh2.setText(String.valueOf(staff.getNamSinh()));
-        txtMatKhau.setText(staff.getMatKhau());
-
-        if (staff.getGioiTinh().equalsIgnoreCase("Nam")) {
-            rdoNam.setSelected(true);
-        } else {
-            rdoNu.setSelected(true);
-        }
-
-        if (staff.isChucVu()) {
-            rdoQL.setSelected(true);
-        } else {
-            rdoNV.setSelected(true);
-        }
-    }
-
     private void updateTable(List<StaffModel> staffList) {
         tableModel.setRowCount(0);
         for (int i = 0; i < staffList.size(); i++) {
@@ -121,6 +110,7 @@ public class Staff extends TabbedForm {
         txtEmail2.setText("");
         txtNamSinh2.setText("");
         txtMatKhau.setText("");
+        loadData();
     }
 
     private boolean validateInput() {
@@ -243,15 +233,15 @@ public class Staff extends TabbedForm {
         btnLamMoi = new javax.swing.JButton();
         btnNghiViec = new javax.swing.JButton();
         btnDelete = new javax.swing.JButton();
+        btnDiLam = new javax.swing.JButton();
         jPanel6 = new javax.swing.JPanel();
         jLabel31 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblNhanVien = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         txtTimKiem = new javax.swing.JTextField();
-        rdoDangLam = new javax.swing.JRadioButton();
-        rbDaNghiViec = new javax.swing.JRadioButton();
         jLabel30 = new javax.swing.JLabel();
+        cboTrangthai = new javax.swing.JComboBox<>();
 
         jPanel4.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
@@ -283,6 +273,11 @@ public class Staff extends TabbedForm {
         jLabel28.setText("Email:");
 
         txtID2.setEditable(false);
+        txtID2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtID2ActionPerformed(evt);
+            }
+        });
 
         buttonGroup3.add(rdoNam);
         rdoNam.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
@@ -305,7 +300,7 @@ public class Staff extends TabbedForm {
 
         jPanel5.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
-        btnThem.setBackground(new java.awt.Color(0, 204, 51));
+        btnThem.setBackground(new java.awt.Color(102, 153, 255));
         btnThem.setText("Thêm Nhân Viên");
         btnThem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -313,7 +308,7 @@ public class Staff extends TabbedForm {
             }
         });
 
-        btnSua.setBackground(new java.awt.Color(0, 153, 153));
+        btnSua.setBackground(new java.awt.Color(102, 153, 255));
         btnSua.setText("Sửa Nhân Viên");
         btnSua.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -321,7 +316,7 @@ public class Staff extends TabbedForm {
             }
         });
 
-        btnLamMoi.setBackground(new java.awt.Color(153, 153, 153));
+        btnLamMoi.setBackground(new java.awt.Color(102, 153, 255));
         btnLamMoi.setText("Làm Mới");
         btnLamMoi.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -329,7 +324,7 @@ public class Staff extends TabbedForm {
             }
         });
 
-        btnNghiViec.setBackground(new java.awt.Color(255, 0, 0));
+        btnNghiViec.setBackground(new java.awt.Color(102, 153, 255));
         btnNghiViec.setText("Nghỉ Việc");
         btnNghiViec.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -337,12 +332,21 @@ public class Staff extends TabbedForm {
             }
         });
 
-        btnDelete.setBackground(new java.awt.Color(0, 204, 204));
+        btnDelete.setBackground(new java.awt.Color(102, 153, 255));
         btnDelete.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         btnDelete.setText("Xóa nhân viên");
         btnDelete.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeleteActionPerformed(evt);
+            }
+        });
+
+        btnDiLam.setBackground(new java.awt.Color(102, 153, 255));
+        btnDiLam.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        btnDiLam.setText("Đi làm");
+        btnDiLam.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDiLamActionPerformed(evt);
             }
         });
 
@@ -353,6 +357,7 @@ public class Staff extends TabbedForm {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(btnDiLam, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnDelete, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
@@ -376,7 +381,9 @@ public class Staff extends TabbedForm {
                 .addComponent(btnNghiViec, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(btnDelete)
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(btnDiLam)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -425,42 +432,41 @@ public class Staff extends TabbedForm {
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(38, 38, 38)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel20)
-                            .addComponent(txtID2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel25)
-                            .addComponent(txtSDT2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(23, 23, 23)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel21)
-                            .addComponent(txtHoTen2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel26)
-                            .addComponent(txtMatKhau, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(31, 31, 31)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel22)
-                            .addComponent(rdoNam)
-                            .addComponent(rdoNu)
-                            .addComponent(txtEmail2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel28))
-                        .addGap(25, 25, 25)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel23)
-                            .addComponent(txtNamSinh2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel27)
-                            .addComponent(rdoNV)
-                            .addComponent(rdoQL))
-                        .addGap(31, 31, 31)
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel24)
-                            .addComponent(txtDiaChi2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(22, Short.MAX_VALUE))
+                .addGap(38, 38, 38)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel20)
+                    .addComponent(txtID2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel25)
+                    .addComponent(txtSDT2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(23, 23, 23)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel21)
+                    .addComponent(txtHoTen2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel26)
+                    .addComponent(txtMatKhau, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(31, 31, 31)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel22)
+                    .addComponent(rdoNam)
+                    .addComponent(rdoNu)
+                    .addComponent(txtEmail2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel28))
+                .addGap(25, 25, 25)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel23)
+                    .addComponent(txtNamSinh2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel27)
+                    .addComponent(rdoNV)
+                    .addComponent(rdoQL))
+                .addGap(31, 31, 31)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel24)
+                    .addComponent(txtDiaChi2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jPanel6.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -498,20 +504,27 @@ public class Staff extends TabbedForm {
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel1.setText("Tìm kiếm");
 
+        txtTimKiem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtTimKiemActionPerformed(evt);
+            }
+        });
         txtTimKiem.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtTimKiemKeyReleased(evt);
             }
         });
 
-        buttonGroup1.add(rdoDangLam);
-        rdoDangLam.setText("Đang làm");
-
-        buttonGroup1.add(rbDaNghiViec);
-        rbDaNghiViec.setText("Đã nghỉ việc");
-
-        jLabel30.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel30.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel30.setText("Trạng Thái:");
+
+        cboTrangthai.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        cboTrangthai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tất cả", "Đang làm việc", "Nghỉ việc" }));
+        cboTrangthai.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cboTrangthaiActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -520,36 +533,35 @@ public class Staff extends TabbedForm {
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel6Layout.createSequentialGroup()
-                        .addGap(17, 17, 17)
+                        .addGap(31, 31, 31)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1072, Short.MAX_VALUE))
+                    .addGroup(jPanel6Layout.createSequentialGroup()
                         .addComponent(jLabel31)
-                        .addGap(228, 228, 228)
+                        .addGap(245, 245, 245)
                         .addComponent(jLabel1)
                         .addGap(27, 27, 27)
                         .addComponent(txtTimKiem, javax.swing.GroupLayout.PREFERRED_SIZE, 217, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(48, 48, 48)
                         .addComponent(jLabel30)
-                        .addGap(31, 31, 31)
-                        .addComponent(rdoDangLam)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(rbDaNghiViec))
-                    .addGroup(jPanel6Layout.createSequentialGroup()
-                        .addGap(31, 31, 31)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1072, Short.MAX_VALUE)))
+                        .addGap(18, 18, 18)
+                        .addComponent(cboTrangthai, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel31)
-                    .addComponent(jLabel1)
-                    .addComponent(txtTimKiem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel30)
-                    .addComponent(rbDaNghiViec)
-                    .addComponent(rdoDangLam))
+                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel6Layout.createSequentialGroup()
+                        .addGap(16, 16, 16)
+                        .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1)
+                            .addComponent(txtTimKiem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel30)
+                            .addComponent(cboTrangthai, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(jLabel31))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE)
                 .addGap(12, 12, 12))
         );
 
@@ -559,8 +571,8 @@ public class Staff extends TabbedForm {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel6, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel6, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -635,21 +647,17 @@ public class Staff extends TabbedForm {
             MessageAlerts.getInstance().showMessage("Xác nhận cập nhật nhân viên",
                     "Bạn có chắc muốn cập nhật thông tin nhân viên này?",
                     MessageAlerts.MessageType.WARNING,
-                    MessageAlerts.YES_NO_OPTION,
-                    new PopupCallbackAction() {
-                @Override
-                public void action(PopupController pc, int option) {
-                    if (option == MessageAlerts.YES_OPTION) {
-                        if (staffService.update(staff, id) > 0) {
-                            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Cập nhật nhân viên thành công!");
-                            loadData();
-                            clearForm();
-                        } else {
-                            Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật nhân viên thất bại!");
+                    MessageAlerts.YES_NO_OPTION, (PopupController pc, int option) -> {
+                        if (option == MessageAlerts.YES_OPTION) {
+                            if (staffService.update(staff, id) > 0) {
+                                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Cập nhật nhân viên thành công!");
+                                loadData();
+                                clearForm();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật nhân viên thất bại!");
+                            }
                         }
-                    }
-                }
-            });
+                    });
         }
     }//GEN-LAST:event_btnSuaActionPerformed
 
@@ -663,21 +671,17 @@ public class Staff extends TabbedForm {
             MessageAlerts.getInstance().showMessage("Xác nhận nghỉ việc nhân viên",
                     "Bạn có chắc muốn cho nhân viên này nghỉ việc?",
                     MessageAlerts.MessageType.WARNING,
-                    MessageAlerts.YES_NO_OPTION,
-                    new PopupCallbackAction() {
-                @Override
-                public void action(PopupController pc, int option) {
-                    if (option == MessageAlerts.YES_OPTION) {
-                        if (staffService.updateTrangThai(id) > 0) {
-                            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Đã cập nhật trạng thái nhân viên thành nghỉ việc!");
-                            loadData();
-                            clearForm();
-                        } else {
-                            Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật trạng thái thất bại!");
+                    MessageAlerts.YES_NO_OPTION, (PopupController pc, int option) -> {
+                        if (option == MessageAlerts.YES_OPTION) {
+                            if (staffService.updateTrangThai(id) > 0) {
+                                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Đã cập nhật trạng thái nhân viên thành nghỉ việc!");
+                                loadData();
+                                clearForm();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật trạng thái thất bại!");
+                            }
                         }
-                    }
-                }
-            });
+                    });
         } else {
             Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn nhân viên cần cập nhật trạng thái!");
         }
@@ -715,9 +719,14 @@ public class Staff extends TabbedForm {
     }//GEN-LAST:event_tblNhanVienMouseClicked
 
     private void txtTimKiemKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtTimKiemKeyReleased
-        String keyword = txtTimKiem.getText().trim();
-        List<StaffModel> searchResult = staffService.getStaffByHoTen(keyword);
-        updateTable(searchResult);
+        String keyword = txtTimKiem.getText().trim().toLowerCase();
+        List<StaffModel> searchResult = staffService.searchStaff(keyword);
+        if (searchResult.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.INFO, "Không tìm thấy nhân viên phù hợp");
+            // Nếu không tìm thấy, giữ nguyên dữ liệu hiện tại
+        } else {
+            updateTable(searchResult);
+        }
     }//GEN-LAST:event_txtTimKiemKeyReleased
 
     private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
@@ -742,9 +751,45 @@ public class Staff extends TabbedForm {
                 }
             });
         } else {
-             Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn nhân viên cần xóa!");
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn nhân viên cần xóa!");
         }
     }//GEN-LAST:event_btnDeleteActionPerformed
+
+    private void btnDiLamActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDiLamActionPerformed
+        String id = txtID2.getText();
+        if (!id.isEmpty()) {
+            MessageAlerts.getInstance().showMessage("Xác nhận khôi phục trạng thái",
+                    "Bạn có chắc muốn khôi phục trạng thái của nhân viên này thành 'Đang làm việc'?",
+                    MessageAlerts.MessageType.WARNING,
+                    MessageAlerts.YES_NO_OPTION, (PopupController pc, int option) -> {
+                        if (option == MessageAlerts.YES_OPTION) {
+                            if (staffService.updateActiveTrangThai(id) > 0) {
+                                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Đã cập nhật trạng thái nhân viên thành 'Đang làm việc'!");
+                                loadData();
+                                clearForm();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật trạng thái thất bại!");
+                            }
+                        }
+                    });
+        } else {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn nhân viên cần cập nhật trạng thái!");
+        }
+    }//GEN-LAST:event_btnDiLamActionPerformed
+
+    private void cboTrangthaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboTrangthaiActionPerformed
+        String selectedStatus = cboTrangthai.getSelectedItem().toString();
+        List<StaffModel> filteredStaff = staffService.getStaffByStatus(selectedStatus);
+        updateTable(filteredStaff);
+    }//GEN-LAST:event_cboTrangthaiActionPerformed
+
+    private void txtTimKiemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTimKiemActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtTimKiemActionPerformed
+
+    private void txtID2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtID2ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtID2ActionPerformed
 
     @Override
     public boolean formClose() {
@@ -757,7 +802,8 @@ public class Staff extends TabbedForm {
                 || !txtNamSinh2.getText().trim().isEmpty()
                 || !txtTimKiem.getText().trim().isEmpty()) {
 
-            int opt = JOptionPane.showConfirmDialog(this, "Dữ liệu chưa được lưu, bạn có chắc chắn muốn đóng tab ? ", "Close",JOptionPane.WARNING_MESSAGE ,JOptionPane.YES_NO_OPTION);
+            int opt = JOptionPane.showConfirmDialog(this, "Dữ liệu chưa được lưu, bạn có chắc chắn muốn đóng tab ? ", "Close", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
+
             return opt == JOptionPane.YES_OPTION;
         }
 
@@ -767,6 +813,7 @@ public class Staff extends TabbedForm {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnDelete;
+    private javax.swing.JButton btnDiLam;
     private javax.swing.JButton btnLamMoi;
     private javax.swing.JButton btnNghiViec;
     private javax.swing.JButton btnSua;
@@ -774,6 +821,7 @@ public class Staff extends TabbedForm {
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
     private javax.swing.ButtonGroup buttonGroup3;
+    private javax.swing.JComboBox<String> cboTrangthai;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
@@ -790,8 +838,6 @@ public class Staff extends TabbedForm {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JRadioButton rbDaNghiViec;
-    private javax.swing.JRadioButton rdoDangLam;
     private javax.swing.JRadioButton rdoNV;
     private javax.swing.JRadioButton rdoNam;
     private javax.swing.JRadioButton rdoNu;

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="TheShopTshirt">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/TheShopTshirt/dist/TheShopTshirt.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -16,17 +16,19 @@ import net.miginfocom.swing.MigLayout;
 
 public class TabbedItem extends JToggleButton { // Kế thừa JToggleButton để tạo item trong tab
 
-    protected final TabbedForm component; // Khai báo biến component để chứa form của tab
+    public final TabbedForm component; // Khai báo biến component để chứa form của tab
+    private final String title; // Biến lưu trữ tiêu đề của tab
 
-    public TabbedItem(String name, TabbedForm component) { // Constructor của TabbedItem
+    public TabbedItem(String title, TabbedForm component) { // Constructor của TabbedItem
+        this.title = title; // Gán tiêu đề cho biến thành viên
         this.component = component; // Gán component cho biến thành viên
-        init(name); // Gọi phương thức khởi tạo
+        init(); // Gọi phương thức khởi tạo
     }
 
-    private void init(String name) { // Phương thức khởi tạo
+    private void init() { // Phương thức khởi tạo
         setLayout(new MigLayout("", "[]10[]")); // Thiết lập layout cho TabbedItem
         putClientProperty(FlatClientProperties.STYLE, ""
-                + "borderWidth:0;" // Không viền
+                + "borderWidth:1;" //Có viền
                 + "focusWidth:0;" // Không có đường viền khi focus
                 + "innerFocusWidth:0;" // Không có đường viền bên trong khi focus
                 + "background:null;" // Không có nền
@@ -45,7 +47,7 @@ public class TabbedItem extends JToggleButton { // Kế thừa JToggleButton đ�
                 + "background:null;" // Không có nền
                 + "arc:999;"); // Bo góc hoàn toàn (hình tròn)
         
-        add(new JLabel(name)); // Thêm nhãn với tên tab
+        add(new JLabel(title)); // Thêm nhãn với tiêu đề tab
         add(cmd, BorderLayout.EAST); // Thêm nút đóng vào góc phải
     }
 
@@ -64,7 +66,7 @@ public class TabbedItem extends JToggleButton { // Kế thừa JToggleButton đ�
         }
     }
 
-    void refresh() {
-        // Viết code để làm mới toàn bộ các tab 
+    public String getTitle() { // Phương thức lấy tiêu đề của tab
+        return title;
     }
 }

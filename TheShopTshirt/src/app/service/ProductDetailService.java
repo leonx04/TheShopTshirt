@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  *
- * @author dungn
+ * @author ADMIN
  */
 public class ProductDetailService {
     Connection con = null;
@@ -352,7 +352,7 @@ public class ProductDetailService {
 
     public String getNewSPCTID() {
         // Mã sản phẩm mặc định
-        String newID = "SPCT01";
+        String newID = "SPCT001";
         try {
             // Truy vấn SQL để lấy số thứ tự lớn nhất của mã sản phẩm từ cơ sở dữ liệu
             sql = "SELECT MAX(CAST(SUBSTRING(ID, 5, LEN(ID)) AS INT)) AS maxID FROM SANPHAMCHITIET";
@@ -373,8 +373,8 @@ public class ProductDetailService {
                 int maxID = rs.getInt("maxID");
                 // Tăng giá trị số thứ tự lên một đơn vị
                 maxID++;
-                // Tạo mã sản phẩm mới từ số thứ tự lớn nhất và định dạng lại để có hai chữ số
-                newID = "SPCT" + String.format("%02d", maxID);
+                // Tạo mã sản phẩm mới từ số thứ tự lớn nhất và định dạng lại để có ba chữ số
+                newID = "SPCT" + String.format("%03d", maxID);
             }
         } catch (Exception e) {
             // Xử lý ngoại lệ nếu có lỗi xảy ra

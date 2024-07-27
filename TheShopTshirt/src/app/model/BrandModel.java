@@ -6,7 +6,7 @@ package app.model;
 
 /**
  *
- * @author dungn
+ * @author ADMIN
  */
 public class BrandModel {
     public String ID;

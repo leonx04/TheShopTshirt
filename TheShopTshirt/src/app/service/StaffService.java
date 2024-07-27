@@ -5,6 +5,7 @@ import app.model.StaffModel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,8 +39,7 @@ public class StaffService {
                 listStaff.add(staff);
             }
             return listStaff;
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
             return null;
         }
     }
@@ -82,13 +82,17 @@ public class StaffService {
         }
     }
 
-    public List<StaffModel> getStaffByHoTen(String hoTen) {
-        sql = "SELECT * FROM NHANVIEN WHERE HoTen = ?";
+    public List<StaffModel> searchStaff(String keyword) {
+        sql = "SELECT * FROM NHANVIEN WHERE LOWER(HoTen) LIKE ? OR LOWER(ID) LIKE ? OR LOWER(Email) LIKE ? OR LOWER(SoDienThoai) LIKE ?";
         List<StaffModel> listStaff = new ArrayList<>();
         try {
             con = DBConnect.getConnection();
             ps = con.prepareStatement(sql);
-            ps.setString(1, hoTen);
+            String likeKeyword = "%" + keyword + "%";
+            ps.setString(1, likeKeyword);
+            ps.setString(2, likeKeyword);
+            ps.setString(3, likeKeyword);
+            ps.setString(4, likeKeyword);
             rs = ps.executeQuery();
             while (rs.next()) {
                 StaffModel staff = new StaffModel(
@@ -107,7 +111,6 @@ public class StaffService {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
         return listStaff;
     }
@@ -160,6 +163,48 @@ public class StaffService {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    public StaffModel checklogin(String email, String matKhau) {
+        String sql = "SELECT * FROM NhanVien WHERE Email = ? AND MatKhau = ?";
+        try (Connection conn = DBConnect.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, email);
+            ps.setString(2, matKhau);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new StaffModel(
+                        rs.getString("ID"),
+                        rs.getString("HoTen"),
+                        rs.getString("DiaChi"),
+                        rs.getString("SoDienThoai"),
+                        rs.getString("Email"),
+                        rs.getInt("NamSinh"),
+                        rs.getString("GioiTinh"),
+                        rs.getBoolean("ChucVu"),
+                        rs.getString("MatKhau"),
+                        rs.getString("TrangThai")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean isAccountInactive(String email) {
+        String sql = "SELECT TrangThai FROM NhanVien WHERE Email = ?";
+        try (Connection conn = DBConnect.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getString("TrangThai").equals("Nghỉ việc");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public int update(StaffModel staff, String id) {
@@ -272,4 +317,41 @@ public class StaffService {
         }
         return false;
     }
+
+    public List<StaffModel> getStaffByStatus(String status) {
+        List<StaffModel> listStaff = new ArrayList<>();
+        String sql;
+        if (status.equals("Tất cả")) {
+            sql = "SELECT * FROM NHANVIEN ORDER BY NgayTao DESC";
+        } else {
+            sql = "SELECT * FROM NHANVIEN WHERE TrangThai = ? ORDER BY NgayTao DESC";
+        }
+        try {
+            con = DBConnect.getConnection();
+            ps = con.prepareStatement(sql);
+            if (!status.equals("Tất cả")) {
+                ps.setString(1, status);
+            }
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                StaffModel staff = new StaffModel(
+                        rs.getString("ID"),
+                        rs.getString("HoTen"),
+                        rs.getString("DiaChi"),
+                        rs.getString("SoDienThoai"),
+                        rs.getString("Email"),
+                        rs.getInt("NamSinh"),
+                        rs.getString("GioiTinh"),
+                        rs.getBoolean("ChucVu"),
+                        rs.getString("MatKhau"),
+                        rs.getString("TrangThai")
+                );
+                listStaff.add(staff);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return listStaff;
+    }
+
 }

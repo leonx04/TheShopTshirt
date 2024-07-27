@@ -24,25 +24,26 @@ import raven.toast.Notifications;
 
 /**
  *
- * @author dungn
+ * @author ADMIN
  */
 public class Products extends TabbedForm {
 
     private DefaultTableModel model = new DefaultTableModel();
-    private ProductsService sprs = new ProductsService();
+    private final ProductsService sprs = new ProductsService();
 
     // Định nghĩa số lượng bản ghi hiển thị trên mỗi trang
-    private static final int RECORDS_PER_PAGE = 10;
+    private static final int RECORDS_PER_PAGE = 20;
     private int currentPage = 1; // Trang hiện tại
 
-    /**
-     * Creates new form ProductsModel
-     */
+    @Override
+    public void fromRefresh() {
+        // Tải lại dữ liệu cho form 
+        init();
+    }
+
     public Products() {
         initComponents();
         init();
-        JComboBox<String> cboFilterTrangThai = new JComboBox<>(
-                new String[]{"Tất cả", "Đang kinh doanh", "Ngừng kinh doanh"});
     }
 
     void refreshData() {
@@ -85,26 +86,14 @@ public class Products extends TabbedForm {
 
     private void init() {
         // Cài đặt thanh phân trang
-        pagination1.addEventPagination(new EventPagination() {
-            @Override
-            public void pageChanged(int page) {
-                currentPage = page; // Cập nhật trang hiện tại khi chuyển trang
-                refreshData(); // Hiển thị dữ liệu cho trang mới
-            }
+        pagination1.addEventPagination((int page) -> {
+            currentPage = page; // Cập nhật trang hiện tại khi chuyển trang
+            refreshData(); // Hiển thị dữ liệu cho trang mới
         });
         pagination1.setPaginationItemRender(new PaginationItemRenderStyle1());
         refreshData(); // Hiển thị dữ liệu ban đầu khi khởi động
     }
 
-    void showData(int index) {
-        String ID = tblSP.getValueAt(index, 1).toString().trim();
-        String tenSP = tblSP.getValueAt(index, 2).toString().trim();
-        String moTa = tblSP.getValueAt(index, 3).toString().trim();
-
-        txtMaSP.setText(ID);
-        txtTenSP.setText(tenSP);
-        txtMoTa.setText(moTa);
-    }
 
     ProductsModel read() {
         ProductsModel sp = new ProductsModel();
@@ -165,21 +154,11 @@ public class Products extends TabbedForm {
 
         fillTable(filteredList);
     }
-
     /**
      * Lọc dữ liệu trong bảng theo biểu thức chính quy.
      *
      * @param query Biểu thức chính quy sử dụng để lọc dữ liệu.
      */
-    private void filter(String query) {
-        // Tạo một đối tượng TableRowSorter và gán cho bảng tblSP.
-        TableRowSorter<DefaultTableModel> tableRowSorter = new TableRowSorter<>(model);
-        tblSP.setRowSorter(tableRowSorter);
-
-        // Thiết lập bộ lọc sử dụng biểu thức chính quy và áp dụng cho TableRowSorter.
-        // Sử dụng biểu thức chính quy không phân biệt chữ hoa chữ thường
-        tableRowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + query));
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -249,11 +228,11 @@ public class Products extends TabbedForm {
                         .addComponent(jLabel2)
                         .addGap(57, 57, 57)
                         .addComponent(txtTenSP)))
-                .addGap(28, 28, 28)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 175, Short.MAX_VALUE)
                 .addComponent(jLabel4)
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 375, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(27, Short.MAX_VALUE))
+                .addGap(26, 26, 26)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 892, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -261,18 +240,18 @@ public class Products extends TabbedForm {
                 .addGap(38, 38, 38)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jScrollPane2)
+                        .addContainerGap())
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel1)
                             .addComponent(txtMaSP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel4))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 120, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel2)
                             .addComponent(txtTenSP, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(35, 35, 35))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(35, 35, 35))))
         );
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.LOWERED), "Danh sách sản phẩm", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 1, 14))); // NOI18N
@@ -360,13 +339,15 @@ public class Products extends TabbedForm {
                     .addComponent(txtTimKiem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(Cbo_TrangThai, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5))
-                .addGap(22, 22, 22)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED), "Tương tác", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 1, 14))); // NOI18N
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createCompoundBorder(), "Tương tác", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 1, 14))); // NOI18N
+        jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        btnAddSP.setBackground(new java.awt.Color(0, 153, 0));
+        btnAddSP.setBackground(new java.awt.Color(51, 153, 255));
         btnAddSP.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnAddSP.setText("Thêm sản phẩm");
         btnAddSP.addActionListener(new java.awt.event.ActionListener() {
@@ -374,84 +355,57 @@ public class Products extends TabbedForm {
                 btnAddSPActionPerformed(evt);
             }
         });
+        jPanel3.add(btnAddSP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 28, 193, -1));
 
-        btnUpdateSP.setBackground(new java.awt.Color(0, 153, 153));
-        btnUpdateSP.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        btnUpdateSP.setBackground(new java.awt.Color(51, 153, 255));
+        btnUpdateSP.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnUpdateSP.setText("Cập nhật sản phẩm");
         btnUpdateSP.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnUpdateSPActionPerformed(evt);
             }
         });
+        jPanel3.add(btnUpdateSP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 67, 193, -1));
 
-        btnReset.setBackground(new java.awt.Color(153, 153, 153));
-        btnReset.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        btnReset.setBackground(new java.awt.Color(51, 153, 255));
+        btnReset.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnReset.setText("Làm mới");
         btnReset.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnResetActionPerformed(evt);
             }
         });
+        jPanel3.add(btnReset, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 112, 193, -1));
 
-        btnDeleteSP.setBackground(new java.awt.Color(255, 0, 0));
-        btnDeleteSP.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        btnDeleteSP.setBackground(new java.awt.Color(51, 153, 255));
+        btnDeleteSP.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         btnDeleteSP.setText("Xóa");
         btnDeleteSP.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeleteSPActionPerformed(evt);
             }
         });
+        jPanel3.add(btnDeleteSP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 151, 193, -1));
 
-        btnHuySP.setBackground(new java.awt.Color(255, 153, 153));
-        btnHuySP.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        btnHuySP.setText("Lưu trữ");
+        btnHuySP.setBackground(new java.awt.Color(51, 153, 255));
+        btnHuySP.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnHuySP.setText("Ngừng hoạt động");
         btnHuySP.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnHuySPActionPerformed(evt);
             }
         });
+        jPanel3.add(btnHuySP, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, 193, -1));
 
-        btnKhoiPhuc.setBackground(new java.awt.Color(102, 102, 255));
-        btnKhoiPhuc.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        btnKhoiPhuc.setText("Khôi phục");
+        btnKhoiPhuc.setBackground(new java.awt.Color(51, 153, 255));
+        btnKhoiPhuc.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnKhoiPhuc.setText("Khôi phục hoạt động");
         btnKhoiPhuc.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnKhoiPhucActionPerformed(evt);
             }
         });
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnAddSP, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnUpdateSP, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnReset, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnDeleteSP, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnHuySP, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnKhoiPhuc, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(btnAddSP)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnUpdateSP)
-                .addGap(18, 18, 18)
-                .addComponent(btnReset)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnDeleteSP)
-                .addGap(12, 12, 12)
-                .addComponent(btnKhoiPhuc)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
-                .addComponent(btnHuySP)
-                .addContainerGap())
-        );
+        jPanel3.add(btnKhoiPhuc, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 190, 193, -1));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -462,14 +416,14 @@ public class Products extends TabbedForm {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(pagination1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(164, 164, 164))
+                .addGap(562, 562, 562))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -479,10 +433,10 @@ public class Products extends TabbedForm {
                     .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addComponent(pagination1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addGap(16, 16, 16))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -535,49 +489,39 @@ public class Products extends TabbedForm {
         MessageAlerts.getInstance().showMessage("Xác nhận thêm sản phẩm",
                 "Bạn có chắc muốn thêm sản phẩm này?",
                 MessageAlerts.MessageType.SUCCESS,
-                MessageAlerts.YES_NO_OPTION,
-                new PopupCallbackAction() {
-            @Override
-            public void action(PopupController pc, int option) {
-                if (option == MessageAlerts.YES_OPTION) {
-                    if (sprs.insert(spmd) > 0) {
-                        Notifications.getInstance().show(Notifications.Type.SUCCESS, "Thêm thành công");
-                        refreshData();
-                        fillTable(sprs.getAllSP());
-                        clear();
-                    } else {
-                        Notifications.getInstance().show(Notifications.Type.ERROR, "Thêm thất bại");
+                MessageAlerts.YES_NO_OPTION, (PopupController pc, int option) -> {
+                    if (option == MessageAlerts.YES_OPTION) {
+                        if (sprs.insert(spmd) > 0) {
+                            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Thêm thành công");
+                            refreshData();
+                            fillTable(sprs.getAllSP());
+                            clear();
+                        } else {
+                            Notifications.getInstance().show(Notifications.Type.ERROR, "Thêm thất bại");
+                        }
                     }
-                }
-            }
         });
     }//GEN-LAST:event_btnAddSPActionPerformed
 
     private void btnUpdateSPActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateSPActionPerformed
         if (!checkForm()) {
-            return;
         } else {
             ProductsModel spmd = this.read();
             ProductsService sprs = new ProductsService();
-            int index = tblSP.getSelectedRow();
 
             MessageAlerts.getInstance().showMessage("Xác nhận cập nhật",
                     "Bạn có chắc muốn cập nhật thông tin sản phẩm này?",
                     MessageAlerts.MessageType.WARNING,
-                    MessageAlerts.YES_NO_OPTION,
-                    new PopupCallbackAction() {
-                @Override
-                public void action(PopupController pc, int option) {
-                    if (option == MessageAlerts.YES_OPTION) {
-                        if (sprs.update(spmd, spmd.getID()) > 0) {
-                            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Cập nhật thông tin sản phẩm thành công");
-                            fillTable(sprs.getAllSP());
-                            clear();
-                        } else {
-                            Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật thất bại");
+                    MessageAlerts.YES_NO_OPTION, (PopupController pc, int option) -> {
+                        if (option == MessageAlerts.YES_OPTION) {
+                            if (sprs.update(spmd, spmd.getID()) > 0) {
+                                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Cập nhật thông tin sản phẩm thành công");
+                                fillTable(sprs.getAllSP());
+                                clear();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật thất bại");
+                            }
                         }
-                    }
-                }
             });
         }
     }//GEN-LAST:event_btnUpdateSPActionPerformed
@@ -592,28 +536,24 @@ public class Products extends TabbedForm {
             String ID = tblSP.getValueAt(rowDC, 1).toString();
 
             if (sprs.checkTonTaiSPCT(ID)) {
-                Notifications.getInstance().show(Notifications.Type.WARNING, "Không thể xóa sản phẩm này vì đang tồn tại sản phẩm chi tiết!");
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Không thể xóa sản phẩm này vì nó đang tồn tại trong sản phẩm chi tiết!");
                 return;
             }
 
             MessageAlerts.getInstance().showMessage("Xác nhận xóa",
                     "Bạn có chắc muốn xóa sản phẩm này?",
                     MessageAlerts.MessageType.WARNING,
-                    MessageAlerts.YES_NO_OPTION,
-                    new PopupCallbackAction() {
-                @Override
-                public void action(PopupController pc, int option) {
-                    if (option == MessageAlerts.YES_OPTION) {
-                        if (sprs.delete(ID) > 0) {
-                            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Xoá thành công sản phẩm!");
-                            refreshData();
-                            fillTable(sprs.getAllSP());
-                            clear();
-                        } else {
-                            Notifications.getInstance().show(Notifications.Type.ERROR, "Xoá thất bại");
+                    MessageAlerts.YES_NO_OPTION, (PopupController pc, int option) -> {
+                        if (option == MessageAlerts.YES_OPTION) {
+                            if (sprs.delete(ID) > 0) {
+                                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Xoá thành công sản phẩm!");
+                                refreshData();
+                                fillTable(sprs.getAllSP());
+                                clear();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Xoá thất bại");
+                            }
                         }
-                    }
-                }
             });
         } else {
             Notifications.getInstance().show(Notifications.Type.INFO, "Vui lòng chọn một sản phẩm để xóa");
@@ -628,22 +568,18 @@ public class Products extends TabbedForm {
             MessageAlerts.getInstance().showMessage("Xác nhận ngừng kinh doanh",
                     "Bạn có chắc muốn ngừng kinh doanh sản phẩm này?",
                     MessageAlerts.MessageType.WARNING,
-                    MessageAlerts.YES_NO_OPTION,
-                    new PopupCallbackAction() {
-                @Override
-                public void action(PopupController pc, int option) {
-                    if (option == MessageAlerts.YES_OPTION) {
-                        ProductsModel sp = new ProductsModel();
-                        if (sprs.updateTrangThai(sp, ID) > 0) {
-                            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Đã ngừng kinh doanh sản phẩm!");
-                            refreshData();
-                            fillTable(sprs.getAllSP());
-                            clear();
-                        } else {
-                            Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật trạng thái thất bại");
+                    MessageAlerts.YES_NO_OPTION, (PopupController pc, int option) -> {
+                        if (option == MessageAlerts.YES_OPTION) {
+                            ProductsModel sp = new ProductsModel();
+                            if (sprs.updateTrangThai(sp, ID) > 0) {
+                                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Đã ngừng kinh doanh sản phẩm!");
+                                refreshData();
+                                fillTable(sprs.getAllSP());
+                                clear();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật trạng thái thất bại");
+                            }
                         }
-                    }
-                }
             });
         } else {
             Notifications.getInstance().show(Notifications.Type.INFO, "Vui lòng chọn một sản phẩm để ngừng kinh doanh");
@@ -658,22 +594,18 @@ public class Products extends TabbedForm {
             MessageAlerts.getInstance().showMessage("Xác nhận khôi phục kinh doanh",
                     "Bạn có chắc muốn khôi phục trạng thái kinh doanh sản phẩm này?",
                     MessageAlerts.MessageType.WARNING,
-                    MessageAlerts.YES_NO_OPTION,
-                    new PopupCallbackAction() {
-                @Override
-                public void action(PopupController pc, int option) {
-                    if (option == MessageAlerts.YES_OPTION) {
-                        ProductsModel sp = new ProductsModel();
-                        if (sprs.updateActiveTrangThai(sp, ID) > 0) {
-                            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Đã khôi phục trạng thái thành đã kinh doanh cho sản phẩm!");
-                            refreshData();
-                            fillTable(sprs.getAllSP());
-                            clear();
-                        } else {
-                            Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật trạng thái thất bại");
+                    MessageAlerts.YES_NO_OPTION, (PopupController pc, int option) -> {
+                        if (option == MessageAlerts.YES_OPTION) {
+                            ProductsModel sp = new ProductsModel();
+                            if (sprs.updateActiveTrangThai(sp, ID) > 0) {
+                                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Đã khôi phục trạng thái thành đã kinh doanh cho sản phẩm!");
+                                refreshData();
+                                fillTable(sprs.getAllSP());
+                                clear();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật trạng thái thất bại");
+                            }
                         }
-                    }
-                }
             });
         } else {
             Notifications.getInstance().show(Notifications.Type.INFO, "Vui lòng chọn một sản phẩm để khôi phục trạng thái");
@@ -686,7 +618,7 @@ public class Products extends TabbedForm {
                 || !txtTenSP.getText().trim().isEmpty()
                 || !txtMoTa.getText().trim().isEmpty()) {
 
-            int opt = JOptionPane.showConfirmDialog(this, "Dữ liệu chưa được lưu, bạn có chắc chắn muốn đóng tab ? ", "Close",JOptionPane.WARNING_MESSAGE ,JOptionPane.YES_NO_OPTION);
+            int opt = JOptionPane.showConfirmDialog(this, "Dữ liệu chưa được lưu, bạn có chắc chắn muốn đóng tab ? ", "Close", JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
             return opt == JOptionPane.YES_OPTION;
         }
 

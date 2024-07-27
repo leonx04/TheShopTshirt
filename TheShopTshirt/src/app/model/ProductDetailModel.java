@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 /**
  *
- * @author dungn
+ * @author ADMIN
  */
 public class ProductDetailModel {
     public String ID;

@@ -15,9 +15,10 @@ import java.util.List;
 
 /**
  *
- * @author dungn
+ * @author ADMIN
  */
 public class BrandService {
+
     Connection con = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
@@ -39,9 +40,7 @@ public class BrandService {
 
             }
             return listCL;
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
+        } catch (SQLException e) {
             return null;
         }
     }
@@ -58,8 +57,7 @@ public class BrandService {
                 // Nếu count > 0, tức là tên đã tồn tại
                 return count > 0;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
         }
         return false; // Trả về false nếu có lỗi xảy ra
     }
@@ -76,8 +74,7 @@ public class BrandService {
                 // Nếu count > 0, tức là ID đã tồn tại
                 return count > 0;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
         }
         return false; // Trả về false nếu có lỗi xảy ra
     }
@@ -97,8 +94,7 @@ public class BrandService {
                         rs.getString(3));
                 listTH.add(th);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
             return null;
         }
         return listTH;
@@ -134,9 +130,7 @@ public class BrandService {
                 // đảm bảo rằng số thứ tự sẽ được đặt sau chuỗi "CL" và luôn có ít nhất 3 chữ
                 // số, được điền bằng số 0 nếu cần.
             }
-        } catch (Exception e) {
-            // Xử lý ngoại lệ nếu có lỗi xảy ra
-            e.printStackTrace();
+        } catch (SQLException e) {
         }
         // Trả về mã sản phẩm mới hoặc mã mặc định nếu có lỗi xảy ra
         return newID;
@@ -151,10 +145,7 @@ public class BrandService {
             ps.setObject(2, th.getTenTH());
             ps.setObject(3, th.getMoTa());
             return ps.executeUpdate();
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
-
+        } catch (SQLException e) {
         }
         return 0;
     }
@@ -168,9 +159,7 @@ public class BrandService {
             ps.setObject(1, th.getTenTH());
             ps.setObject(2, th.getMoTa());
             return ps.executeUpdate();
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
+        } catch (SQLException e) {
         }
         return 0;
     }
@@ -182,11 +171,11 @@ public class BrandService {
             ps = con.prepareStatement(sql);
             ps.setObject(1, ma);
             return ps.executeUpdate();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
             return 0;
         }
     }
+
     public boolean checkTonTaiSPCT(String idThuongHieu) {
         String sql = "SELECT COUNT(*) FROM SANPHAMCHITIET WHERE ID_ThuongHieu = ?";
         try {
@@ -199,7 +188,6 @@ public class BrandService {
                 return count > 0;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
         } finally {
             try {
                 if (rs != null) {
@@ -212,7 +200,6 @@ public class BrandService {
                     con.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
             }
         }
         return false;

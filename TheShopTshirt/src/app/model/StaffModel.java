@@ -4,14 +4,18 @@
  */
 package app.model;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  *
- * @author dungn
+ * @author ADMIN
  */
-public class StaffModel {
+public class StaffModel implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+    
+    
     private String id;
     private String hoTen;
     private String diaChi;
@@ -29,9 +33,7 @@ public class StaffModel {
     public StaffModel() {
     }
 
-
-
-    public StaffModel(String id, String hoTen, String diaChi, String sdt, String email, int namSinh, String gioiTinh, boolean chucVu, String matKhau,  String trangThai) {
+    public StaffModel(String id, String hoTen, String diaChi, String sdt, String email, int namSinh, String gioiTinh, boolean chucVu, String matKhau, String trangThai) {
         this.id = id;
         this.hoTen = hoTen;
         this.diaChi = diaChi;
@@ -42,6 +44,10 @@ public class StaffModel {
         this.chucVu = chucVu;
         this.matKhau = matKhau;
         this.trangThai = trangThai;
+    }
+
+    public StaffModel(String tenNV) {
+        this.hoTen = tenNV;
     }
 
     public String getId() {

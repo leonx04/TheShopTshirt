@@ -7,7 +7,6 @@ import app.form.DetailProduct;
 import app.form.ProductAttributes;
 import app.form.Products;
 import app.form.Sell;
-import app.form.Staff;
 import raven.drawer.component.SimpleDrawerBuilder;
 import raven.drawer.component.footer.SimpleFooterData;
 import raven.drawer.component.header.SimpleHeaderData;
@@ -16,37 +15,47 @@ import raven.drawer.component.menu.MenuEvent;
 import raven.drawer.component.menu.MenuValidation;
 import raven.drawer.component.menu.SimpleMenuOption;
 import app.form.Home;
+import app.form.Staff;
 import app.form.Voucher;
 import app.main.Main;
+import app.tabbed.TabbedForm;
+import app.tabbed.TabbedItem;
 import raven.swing.AvatarIcon;
 import app.tabbed.WindowsTabbed;
+import raven.toast.Notifications;
+import app.utils.Auth; // Import lớp Auth
 
-public class MyDrawerBuilder extends SimpleDrawerBuilder { // Kế thừa từ SimpleDrawerBuilder để tạo drawer
+public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
-    @Override
-    public SimpleHeaderData getSimpleHeaderData() { // Phương thức ghi đè để lấy dữ liệu header
-        return new SimpleHeaderData()
-                .setIcon(new AvatarIcon(getClass().getResource("/app/image/profile.jpg"), 80, 80, 1000)) // Điều chỉnh kích thước ảnh là 80x80
-                .setTitle("Tshirt"); // Thiết lập tiêu đề là "Tshirt"
+    public MyDrawerBuilder() {
+        
     }
 
     @Override
-    public SimpleMenuOption getSimpleMenuOption() { // Phương thức ghi đè để lấy tùy chọn menu
-        String menus[][] = { // Mảng chứa các menu và submenu
-            {"~MAIN~"},
-            {"Home"},
-            {"Sell"},
-            {"~WEB APP~"},
-            {"Product", "Products", "Detail Product", "Product Attributes"},
-            {"Bill"},
-            {"Voucher"},
-            {"Staff"},
-            {"Customer"},
-            {"~OTHER~"},
-            {"Charts"},
-            {"Logout"}};
+    public SimpleHeaderData getSimpleHeaderData() {
+        return new SimpleHeaderData()
+                .setIcon(new AvatarIcon(getClass().getResource("/app/image/profile.jpg"), 80, 80, 1000))
+                .setTitle("Tshirt");
+    }
 
-        String icons[] = { // Mảng chứa các biểu tượng tương ứng với menu
+    @Override
+    public SimpleMenuOption getSimpleMenuOption() {
+        String menus[][] = {
+            {"~TRANG CHÍNH~"},
+            {"Trang chủ"},
+            {"Bán hàng"},
+            {"~ỨNG DỤNG~"},
+            {"Sản phẩm", "Sản phẩm", "Sản phẩm chi tiết", "Thuộc tính sản phẩm"},
+            {"Hóa đơn"},
+            {"Voucher"},
+            {"Nhân viên"},
+            {"Khách hàng"},
+            {"~KHÁC~"},
+            {"Charts"},
+            {"Đăng xuất"}
+        };
+
+        String icons[] = {
             "home.svg",
             "sell.svg",
             "product.svg",
@@ -55,62 +64,113 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder { // Kế thừa từ S
             "staff.svg",
             "customer.svg",
             "chart.svg",
-            "logout.svg"};
+            "logout.svg"
+        };
 
         return new SimpleMenuOption()
-                .setMenus(menus) // Thiết lập các menu
-                .setIcons(icons) // Thiết lập các biểu tượng cho menu
-                .setBaseIconPath("app/drawer/icon") // Đường dẫn cơ sở cho các biểu tượng
-                .setIconScale(0.45f) // Tỷ lệ thu nhỏ của biểu tượng
-                .addMenuEvent(new MenuEvent() { // Thêm sự kiện cho menu
+                .setMenus(menus)
+                .setIcons(icons)
+                .setBaseIconPath("app/drawer/icon")
+                .setIconScale(0.45f)
+                .addMenuEvent(new MenuEvent() {
                     @Override
                     public void selected(MenuAction action, int index, int subIndex) {
+                        String tabTitle = "";
+                        TabbedForm form = null;
+
+                        // Xác định tiêu đề tab và form dựa trên index và subIndex
                         if (index == 0) {
-                            WindowsTabbed.getInstance().addTab("Home", new Home()); // Mở tab Home
+                            tabTitle = "Trang chủ";
+                            form = new Home();
                         } else if (index == 1) {
-                            WindowsTabbed.getInstance().addTab("Sell", new Sell()); // Mở tab Sell
+                            tabTitle = "Bán hàng";
+                            form = new Sell();
                         } else if (index == 2) {
+                            // Kiểm tra nếu đây là menu cha (không có subIndex)
+                            if (subIndex == -1) {
+                                // Không làm gì cả vì đây là menu cha
+                                return;
+                            }
                             if (subIndex == 1) {
-                                WindowsTabbed.getInstance().addTab("ProductsModel", new Products()); // Mở tab Products
+                                tabTitle = "Sản Phẩm";
+                                form = new Products();
                             } else if (subIndex == 2) {
-                                WindowsTabbed.getInstance().addTab("Detail Product", new DetailProduct()); // Mở tab Detail Product
+                                tabTitle = "Sản phẩm chi tiết";
+                                form = new DetailProduct();
                             } else if (subIndex == 3) {
-                                WindowsTabbed.getInstance().addTab("Product Attributes", new ProductAttributes()); // Mở tab Product Attributes
+                                tabTitle = "Thuộc tính sản phẩm";
+                                form = new ProductAttributes();
                             }
                         } else if (index == 3) {
-                            WindowsTabbed.getInstance().addTab("Bill", new Bill()); // Mở tab Bill
+                            if (Auth.isManager()) {
+                                tabTitle = "Hóa đơn";
+                                form = new Bill();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Bạn không đủ quyền hạn xem thông tin này");
+                                return;
+                            }
                         } else if (index == 4) {
-                            WindowsTabbed.getInstance().addTab("Voucher", new Voucher()); // Mở tab Voucher
+                            tabTitle = "Voucher";
+                            form = new Voucher();
                         } else if (index == 5) {
-                            WindowsTabbed.getInstance().addTab("Staff", new Staff()); // Mở tab Staff
+                            tabTitle = "Nhân viên";
+                            form = new Staff();
                         } else if (index == 6) {
-                            WindowsTabbed.getInstance().addTab("Customer", new Customer()); // Mở tab Customer
+                            tabTitle = "Khách hàng";
+                            form = new Customer();
                         } else if (index == 7) {
-                            WindowsTabbed.getInstance().addTab("Chart", new Chart()); // Mở tab Chart
+                            if (Auth.isManager()) {
+                                tabTitle = "Charts";
+                                form = new Chart();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Bạn không đủ quyền hạn xem thông tin này");
+                                return;
+                            }
                         } else if (index == 8) {
-                            Main.main.login(); // Gọi phương thức đăng nhập
+                            Auth.clear();
+                            Main.main.login();
+                            Main.main.updateDrawer();
+                            return;
                         }
-                        System.out.println("Menu selected " + index + " " + subIndex); // In ra menu đã chọn
+
+                        if (form != null) {
+                            TabbedItem existingTab = WindowsTabbed.getInstance().findOpenTab(tabTitle);
+                            if (existingTab != null) {
+                                Notifications.getInstance().show(Notifications.Type.INFO, "Bạn đã mở tab này rồi");
+                                // Tab đã tồn tại, focus vào nó
+                                existingTab.setSelected(true);
+                                WindowsTabbed.getInstance().showForm(existingTab.component);
+                            } else {
+                                // Tab chưa tồn tại, tạo mới
+                                WindowsTabbed.getInstance().addTab(tabTitle, form);
+                            }
+                        }
                     }
                 })
-                .setMenuValidation(new MenuValidation() { // Thiết lập xác thực menu
+                .setMenuValidation(new MenuValidation() {
                     @Override
                     public boolean menuValidation(int index, int subIndex) {
-                        // Xác thực menu, có thể điều chỉnh điều kiện
-                        return true; // Mặc định cho phép tất cả các menu
+                        System.out.println("Đã đăng nhập: " + Auth.isLogin());
+                        System.out.println("Chức vụ: " + (Auth.isLogin() ? Auth.user.isChucVu() : "Chưa đăng nhập"));
+
+                        // Ẩn menu Hóa đơn và Charts nếu không phải là quản lý
+                        if (!Auth.isManager() && (index == 3 || index == 7)) {
+                            return false;
+                        }
+                        return true;
                     }
                 });
     }
 
     @Override
-    public SimpleFooterData getSimpleFooterData() { // Phương thức ghi đè để lấy dữ liệu footer
+    public SimpleFooterData getSimpleFooterData() {
         return new SimpleFooterData()
-                .setTitle("Project Shop Tshirt") // Thiết lập tiêu đề footer
-                .setDescription("Version 1.1.0"); // Thiết lập mô tả phiên bản
+                .setTitle("Trang shop Tshirt")
+                .setDescription("Version 1.1.0");
     }
 
     @Override
-    public int getDrawerWidth() { // Phương thức ghi đè để lấy chiều rộng drawer
-        return 275; // Thiết lập chiều rộng drawer là 275
+    public int getDrawerWidth() {
+        return 275;
     }
 }

@@ -9,14 +9,16 @@ import app.model.ColorModel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  *
- * @author dungn
+ * @author ADMIN
  */
 public class ColorService {
+
     Connection con = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
@@ -38,9 +40,7 @@ public class ColorService {
 
             }
             return listCL;
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
+        } catch (SQLException e) {
             return null;
         }
     }
@@ -96,8 +96,7 @@ public class ColorService {
                         rs.getString(3));
                 listMS.add(ms);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
             return null;
         }
         return listMS;
@@ -112,10 +111,7 @@ public class ColorService {
             ps.setObject(2, ms.getTenMS());
             ps.setObject(3, ms.getMoTa());
             return ps.executeUpdate();
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
-
+        } catch (SQLException e) {
         }
         return 0;
     }
@@ -124,37 +120,18 @@ public class ColorService {
         // Mã sản phẩm mặc định
         String newID = "MS001";
         try {
-            // Truy vấn SQL để lấy số thứ tự lớn nhất của mã sản phẩm từ cơ sở dữ liệu
             sql = "SELECT MAX(CAST(SUBSTRING(ID, 4, LEN(ID)) AS INT)) AS maxID FROM MAUSAC";
-            // trong truy vấn SQL, MAX(CAST(SUBSTRING(ID, 4, LEN(ID)) AS INT)) được sử dụng
-            // để lấy số thứ tự lớn nhất của các mã sản phẩm trong cơ sở dữ liệu.
-            // SUBSTRING(ID, 4, LEN(ID)) được sử dụng để cắt bỏ ba ký tự đầu tiên của mã
-            // chất
-            // liệu (trong trường hợp này là "CL"),
-            // sau đó chuyển thành kiểu số nguyên bằng CAST.
-            // Kết nối đến cơ sở dữ liệu
             con = DBConnect.getConnection();
-            // Tạo đối tượng PreparedStatement từ truy vấn SQL
             ps = con.prepareStatement(sql);
-            // Thực hiện truy vấn và lưu kết quả vào ResultSet
             rs = ps.executeQuery();
-            // Kiểm tra xem ResultSet có kết quả hay không
+
             if (rs.next()) {
-                // Nếu có kết quả, lấy giá trị số thứ tự lớn nhất từ cột "maxID"
                 int maxID = rs.getInt("maxID");
-                // Tăng giá trị số thứ tự lên một đơn vị
                 maxID++;
-                // Tạo mã mới từ số thứ tự lớn nhất và định dạng lại để có hai chữ số
                 newID = "MS" + String.format("%03d", maxID);
-                // %03d là định dạng cho số nguyên với độ dài tối thiểu là 3 chữ số. Điều này
-                // đảm bảo rằng số thứ tự sẽ được đặt sau chuỗi "CL" và luôn có ít nhất 3 chữ
-                // số, được điền bằng số 0 nếu cần.
             }
-        } catch (Exception e) {
-            // Xử lý ngoại lệ nếu có lỗi xảy ra
-            e.printStackTrace();
+        } catch (SQLException e) {
         }
-        // Trả về mã sản phẩm mới hoặc mã mặc định nếu có lỗi xảy ra
         return newID;
     }
 
@@ -167,9 +144,7 @@ public class ColorService {
             ps.setObject(1, ms.getTenMS());
             ps.setObject(2, ms.getMoTa());
             return ps.executeUpdate();
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
+        } catch (SQLException e) {
         }
         return 0;
     }
@@ -181,8 +156,7 @@ public class ColorService {
             ps = con.prepareStatement(sql);
             ps.setObject(1, ma);
             return ps.executeUpdate();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
             return 0;
         }
     }
@@ -204,35 +178,37 @@ public class ColorService {
 
             }
             return listCL;
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
+        } catch (SQLException e) {
             return null;
         }
     }
-    
+
     public boolean checkTonTaiSPCT(String maMauSac) {
-    String sql = "SELECT COUNT(*) FROM SANPHAMCHITIET WHERE ID_MauSac = ?";
-    try {
-        con = DBConnect.getConnection();
-        ps = con.prepareStatement(sql);
-        ps.setString(1, maMauSac);
-        rs = ps.executeQuery();
-        if (rs.next()) {
-            int count = rs.getInt(1);
-            return count > 0; 
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-    } finally {
+        String sql = "SELECT COUNT(*) FROM SANPHAMCHITIET WHERE ID_MauSac = ?";
         try {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (con != null) con.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            con = DBConnect.getConnection();
+            ps = con.prepareStatement(sql);
+            ps.setString(1, maMauSac);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                return count > 0;
+            }
+        } catch (SQLException e) {
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+                if (con != null) {
+                    con.close();
+                }
+            } catch (SQLException e) {
+            }
         }
+        return false;
     }
-    return false; 
-}
 }
