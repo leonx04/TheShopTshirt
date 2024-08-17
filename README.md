@@ -5,6 +5,20 @@
 
 TheShopTshirt is a modern Java Swing application designed for managing a T-shirt selling platform. Using Java and Microsoft SQL Server, TheShopTshirt provides a robust platform for inventory management, order processing, and customer information. The application integrates FlatLaf library and custom components (`swing-glasspane-popup-1.3.0.jar`, `swing-toast-notifications-1.0.1.jar`) to deliver a user-friendly interface with powerful functionalities.
 
+## 👁️‍🗨️ Preview
+- Login UI
+![login UI](https://github.com/leonx04/TheShopTshirt/blob/main/TheShopTshirt/images/UI_Login.jpg)
+
+- Sell UI
+![Sell UI](https://github.com/leonx04/TheShopTshirt/blob/main/TheShopTshirt/images/UI_Sell.jpg)
+- Product Detail UI
+![Product Detail UI](https://github.com/leonx04/TheShopTshirt/blob/main/TheShopTshirt/images/Ui_Product_Detail.jpg)
+- Bill Management UI
+![Bill Management UI](https://github.com/leonx04/TheShopTshirt/blob/main/TheShopTshirt/images/UI_Bill.jpg)
+- Meu Opening 
+![Meu Opening  UI](https://github.com/leonx04/TheShopTshirt/blob/main/TheShopTshirt/images/menuopen.jpg)
+
+
 ## 🚀 Getting Started
 
 1. Ensure Java and Microsoft SQL Server are installed on your system.
