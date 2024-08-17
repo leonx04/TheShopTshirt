@@ -23,12 +23,12 @@ import app.tabbed.TabbedItem;
 import raven.swing.AvatarIcon;
 import app.tabbed.WindowsTabbed;
 import raven.toast.Notifications;
-import app.utils.Auth; // Import lớp Auth
+import app.utils.Auth;
 
 public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
     public MyDrawerBuilder() {
-        
+
     }
 
     @Override
@@ -67,6 +67,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
             "logout.svg"
         };
 
+        
         return new SimpleMenuOption()
                 .setMenus(menus)
                 .setIcons(icons)
@@ -113,8 +114,13 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                             tabTitle = "Voucher";
                             form = new Voucher();
                         } else if (index == 5) {
-                            tabTitle = "Nhân viên";
-                            form = new Staff();
+                            if (Auth.isManager()) {
+                                tabTitle = "Nhân viên";
+                                form = new Staff();
+                            } else {
+                                Notifications.getInstance().show(Notifications.Type.ERROR, "Bạn không đủ quyền hạn xem thông tin này");
+                                return;
+                            }
                         } else if (index == 6) {
                             tabTitle = "Khách hàng";
                             form = new Customer();
@@ -154,7 +160,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                         System.out.println("Chức vụ: " + (Auth.isLogin() ? Auth.user.isChucVu() : "Chưa đăng nhập"));
 
                         // Ẩn menu Hóa đơn và Charts nếu không phải là quản lý
-                        if (!Auth.isManager() && (index == 3 || index == 7)) {
+                        if (!Auth.isManager() && (index == 3 || index == 7 || index == 5)) {
                             return false;
                         }
                         return true;

@@ -9,6 +9,7 @@ import app.model.BillDetailModel;
 import app.model.BillModel;
 import app.model.BrandModel;
 import app.model.ColorModel;
+import app.model.CustomerModel;
 import app.model.ProductDetailModel;
 import app.model.SizeModel;
 import app.model.StaffModel;
@@ -21,14 +22,22 @@ import app.service.SellService;
 import app.service.SizeService;
 import app.service.VoucherService;
 import app.tabbed.TabbedForm;
+import app.tabbed.WindowsTabbed;
 import app.utils.Auth;
+import java.awt.HeadlessException;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
+import raven.alerts.MessageAlerts;
+import raven.popup.component.PopupCallbackAction;
+import raven.popup.component.PopupController;
 import raven.toast.Notifications;
 
 /**
@@ -60,6 +69,20 @@ public final class Sell extends TabbedForm {
     private String voucherID;
     private CustomerNew chonKhachHangDialog;
 
+    public void setSelectedHoaDonID(String id) {
+        if (id != null && !id.isEmpty()) {
+            this.selectedHoaDonID = id;
+        }
+    }
+
+    public String getSelectedHoaDonID() {
+        return this.selectedHoaDonID;
+    }
+
+    public void updateTenKhachHang(String tenKhachHang) {
+        txtTenKH.setText(tenKhachHang);
+    }
+
     @Override
     public void fromRefresh() {
         // Tải lại dữ liệu cho form 
@@ -75,7 +98,7 @@ public final class Sell extends TabbedForm {
     public Sell() {
         initComponents();
         txtTenKH.setText("Khách bán lẻ");
-
+        chonKhachHangDialog = new CustomerNew(this, true);
         fillTable(bhrs.getAllCTSP());
         fillTable2(bhrs.getHoaDonChoThanhToan());
         txtTenNV.setText(Auth.user.getHoTen());
@@ -105,7 +128,7 @@ public final class Sell extends TabbedForm {
     }
 
     private void fillTable2(List<BillModel> list) {
-        model = (DefaultTableModel) tblHoaDon.getModel();
+        DefaultTableModel model = (DefaultTableModel) tblHoaDon.getModel();
         model.setRowCount(0); // Xóa tất cả các dòng cũ trước khi điền dữ liệu mới
         if (list != null && !list.isEmpty()) { // Kiểm tra list không rỗng
             for (int i = 0; i < list.size(); i++) {
@@ -127,7 +150,7 @@ public final class Sell extends TabbedForm {
     }
 
     private void fillToTable(List<BillDetailModel> chiTietHoaDons) {
-        model = (DefaultTableModel) tblGioHang.getModel();
+        DefaultTableModel model = (DefaultTableModel) tblGioHang.getModel();
         model.setRowCount(0);
 
         for (BillDetailModel chiTietHoaDon : chiTietHoaDons) {
@@ -137,17 +160,27 @@ public final class Sell extends TabbedForm {
                 chiTietHoaDon.getDonGia().getGiaBan(),
                 chiTietHoaDon.getSoLuong(),
                 chiTietHoaDon.getThanhTien()
-
             };
             model.addRow(rowData);
         }
     }
 
-    // Hàm để điền dữ liệu vào bảng chi tiết hóa đơn dựa trên ID hóa đơn được chọn
+// Hàm để điền dữ liệu vào bảng chi tiết hóa đơn dựa trên ID hóa đơn được chọn
     private void fillChiTietHoaDonTable(String idHoaDon) {
+        if (idHoaDon == null || idHoaDon.trim().isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.ERROR, "ID hóa đơn không hợp lệ: " + idHoaDon);
+            return;
+        }
+
         List<BillDetailModel> chiTietHoaDons = bhrs.searchByHoaDonID(idHoaDon);
         fillToTable(chiTietHoaDons);
         System.out.println("Đã chạy qua hàm fill");
+    }
+
+    // Hàm để làm mới bảng chi tiết hóa đơn
+    private void clearChiTietHoaDonTable() {
+        DefaultTableModel model = (DefaultTableModel) tblGioHang.getModel();
+        model.setRowCount(0); // Xóa tất cả các dòng trong bảng
     }
 
     private void fillTable(List<ProductDetailModel> listCTSP) {
@@ -221,6 +254,66 @@ public final class Sell extends TabbedForm {
         txtTongTien.setText(tongTien.toString()); // Định dạng BigDecimal thành chuỗi để hiển thị
     }
 
+    public BillModel read() {
+        BillModel hdm = new BillModel();
+        hdm.setID(txtMaHD.getText().trim());
+        hdm.setTenNV(new StaffModel(txtTenNV.getText().trim()));
+        hdm.setTenKH(new CustomerModel(txtTenKH.getText().trim()));
+
+        // Lấy tổng tiền từ txtTongTien
+        BigDecimal tongTien = BigDecimal.ZERO;
+        try {
+            tongTien = new BigDecimal(txtTongTien.getText().trim());
+        } catch (NumberFormatException ex) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng nhập tổng tiền hợp lệ.");
+            return null; // Trả về null nếu nhập tổng tiền không hợp lệ
+        }
+
+        // Kiểm tra nếu tổng tiền bằng 0 thì không thể áp dụng voucher
+        if (tongTien.compareTo(BigDecimal.ZERO) == 0) {
+            Notifications.getInstance().show(Notifications.Type.ERROR, "Không thể áp dụng voucher với hóa đơn trống.");
+            return null; // Trả về null nếu tổng tiền bằng 0
+        }
+
+        // Lấy ID của voucher dựa vào tên đã chọn từ cboVoucher
+        String selectedVoucher = cboVoucher.getSelectedItem().toString();
+        String voucherId = bhrs.getIdByTenVoucher(selectedVoucher);
+
+        if (voucherId != null) {
+            hdm.setTenVoucher(new VoucherModer(voucherId)); // Lưu ID voucher vào HoaDonModel
+            System.out.println("Voucher ID: " + voucherId); // Kiểm tra xem voucherId có giá trị hay là null
+
+            // Xác định loại voucher (Giảm theo phần trăm hoặc Giảm theo giá tiền)
+            String loaiVoucher = bhrs.getLoaiVoucherByTenVoucher(selectedVoucher);
+
+            // Lấy mức giảm giá từ voucher để tính tổng tiền sau khi giảm giá
+            BigDecimal discountAmount = bhrs.getMucGiamGiaByTenVoucher(selectedVoucher);
+            if (discountAmount != null) {
+                BigDecimal thanhToan;
+                if ("Giảm theo phần trăm".equals(loaiVoucher)) {
+                    BigDecimal percentDiscount = discountAmount.divide(BigDecimal.valueOf(100));
+                    thanhToan = tongTien.subtract(tongTien.multiply(percentDiscount));
+                } else if ("Giảm theo giá tiền".equals(loaiVoucher)) {
+                    thanhToan = tongTien.subtract(discountAmount);
+                } else {
+                    thanhToan = tongTien; // Nếu loại voucher không hợp lệ, giữ nguyên tổng tiền
+                }
+                // Đảm bảo tổng tiền sau giảm giá không âm
+                thanhToan = thanhToan.max(BigDecimal.ZERO);
+                hdm.setTongTien(thanhToan);
+                txtThanhToan.setText(thanhToan.toPlainString());
+            } else {
+                hdm.setTongTien(tongTien); // Không có giảm giá, giữ nguyên tổng tiền
+                txtThanhToan.setText(tongTien.toPlainString());
+            }
+        } else {
+            hdm.setTenVoucher(null);
+            hdm.setTongTien(tongTien); // Không có voucher, giữ nguyên tổng tiền
+            txtThanhToan.setText(tongTien.toPlainString());
+        }
+        return hdm;
+    }
+
     private void cleanForm() {
         txtMaHD.setText(null);
         txtTenNV.setText(Auth.user.getHoTen());
@@ -234,22 +327,31 @@ public final class Sell extends TabbedForm {
         fillTable(bhrs.getAllCTSP());
         btnOpenKH.setEnabled(true);
         selectedHoaDonID = null;
+        cboVoucher.setSelectedIndex(0);
     }
 
     private void refreshGioHangTable() {
-        // Kiểm tra xem có hàng nào được chọn trong bảng không
-        int rowIndex = tblHoaDon.getSelectedRow();
-        // Kiểm tra xem có hàng nào được chọn không
-        if (rowIndex >= 0) {
-            // Lấy id hóa đơn từ hàng được chọn
-            String idHoaDon = tblHoaDon.getValueAt(rowIndex, 1).toString();
-            // Tìm kiếm chi tiết hóa đơn theo id hóa đơn
-            List<BillDetailModel> chiTietHoaDons = bhrs.searchByHoaDonID(idHoaDon);
-            // Đổ dữ liệu vào bảng
-            fillToTable(chiTietHoaDons);
+        String currentHoaDonID = getSelectedHoaDonID();
+        if (currentHoaDonID != null && !currentHoaDonID.trim().isEmpty()) {
+            int rowIndex = -1;
+            for (int i = 0; i < tblHoaDon.getRowCount(); i++) {
+                if (tblHoaDon.getValueAt(i, 1).toString().equals(currentHoaDonID)) {
+                    rowIndex = i;
+                    break;
+                }
+            }
+
+            if (rowIndex >= 0) {
+                List<BillDetailModel> chiTietHoaDons = bhrs.searchByHoaDonID(currentHoaDonID);
+                fillToTable(chiTietHoaDons);
+            } else {
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Hóa đơn đã chọn không còn trong bảng!");
+                setSelectedHoaDonID(null); // Reset selectedHoaDonID
+                cleanForm(); // Làm sạch form nếu cần
+            }
         } else {
-            // Hiển thị thông báo nếu không có hàng nào được chọn
-//            JOptionPane.showMessageDialog(this, "Vui lòng chọn một hàng từ bảng hóa đơn!");
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn một hóa đơn!");
+            cleanForm(); // Làm sạch form
         }
     }
 
@@ -257,25 +359,200 @@ public final class Sell extends TabbedForm {
     private void refreshFormData() {
         int selectedRow = tblHoaDon.getSelectedRow();
         if (selectedRow >= 0) {
-            // Cập nhật lại bảng chi tiết hoá đơn
-            fillChiTietHoaDonTable(selectedHoaDonID);
+            String hoaDonID = tblHoaDon.getValueAt(selectedRow, 1).toString();
+            setSelectedHoaDonID(hoaDonID);
 
-            // Cập nhật lại bảng hoá đơn 
+            fillChiTietHoaDonTable(getSelectedHoaDonID());
             fillTable2(bhrs.getHoaDonChoThanhToan());
             fillTable(bhrs.getAllCTSP());
 
-            // Lấy thông tin từ bảng hoá đơn
-            selectedHoaDonID = tblHoaDon.getValueAt(selectedRow, 1).toString();
-
-            // Hiển thị thông tin chi tiết của hoá đơn lên form
             showData(selectedRow);
         } else {
-            // Nếu không có hoá đơn nào được chọn, làm sạch form và tắt các nút
-            cleanForm();
+            txtMaHD.setText(null);
+            txtTenNV.setText(Auth.user.getHoTen());
+            txtTenKH.setText("Khách bán lẻ");
+            txtTongTien.setText(null);
+            txtThanhToan.setText(null);
+            txtTienMat.setText(null);
+            txtTienCK.setText(null);
+            txtTienThua.setText(null);
+            txtTimSDT.setText(null);
+            fillTable(bhrs.getAllCTSP());
+            btnOpenKH.setEnabled(true);
+//            selectedHoaDonID = null;
+            cboVoucher.setSelectedIndex(0);
             btnHuyDon.setEnabled(true);
             btnSuccesHoaDon.setEnabled(true);
             btnDeleteGH.setEnabled(true);
         }
+    }
+
+    private void updateVoucherStatusByQuantity() {
+        int updatedCount = vcrs.updateVoucherStatusByQuantity();
+        if (updatedCount > 0) {
+            System.out.println("Đã cập nhật trạng thái của " + updatedCount + " voucher thành Không hoạt động.");
+            Cbo_Voucher();
+        }
+    }
+
+    private void updateHoaDonTrangThai(String hoaDonID, BigDecimal tienThua) {
+        if (hoaDonID == null || hoaDonID.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng cung cấp ID hóa đơn hợp lệ.");
+            return;
+        }
+
+        try {
+            int updated = bhrs.updateBillStatus(hoaDonID, "Đã thanh toán");
+            if (updated > 0) {
+                // Định dạng tiền thừa thành tiền VNĐ
+                NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+                String formattedTienThua = currencyFormatter.format(tienThua);
+
+                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Hóa đơn đã được chuyển sang trạng thái 'Đã thanh toán'");
+
+                MessageAlerts.getInstance().showMessage("Thông báo thành công",
+                        "Số tiền thừa của quý khách là: " + formattedTienThua,
+                        MessageAlerts.MessageType.SUCCESS,
+                        MessageAlerts.CLOSED_OPTION, (PopupController pc, int i) -> {
+                            if (i == 0) { // Sử dụng giá trị thực tế cho nút Close
+                                cleanForm(); // Gọi hàm làm sạch biểu mẫu
+                                fillTable(bhrs.getAllCTSP());
+                                fillTable2(bhrs.getHoaDonChoThanhToan());
+                                clearChiTietHoaDonTable();
+                                System.out.println("Click Close");
+                            } else {
+                                System.out.println("Other button clicked: " + i);
+                            }
+                        });
+
+                // Lấy thông tin hóa đơn
+                BillModel hoaDon = bhrs.getHoaDonByID(hoaDonID);
+                String tenVoucher = hoaDon.getTenVoucher().getTenVoucher().trim();
+                // Cập nhật số lượng voucher
+                bhrs.updateSoLuongVoucher(tenVoucher);
+                updateVoucherStatusByQuantity();
+                fillTable2(bhrs.getHoaDonChoThanhToan());
+            } else {
+                Notifications.getInstance().show(Notifications.Type.ERROR, "Không có hóa đơn nào được cập nhật.");
+            }
+        } catch (HeadlessException ex) {
+            Notifications.getInstance().show(Notifications.Type.ERROR, "Đã xảy ra lỗi: " + ex.getMessage());
+        }
+    }
+
+    private boolean validateTienMat() {
+        // Lấy giá trị thành tiền từ giao diện
+        BigDecimal thanhToan = new BigDecimal(txtThanhToan.getText().trim());
+        String tienMatStr = txtTienMat.getText().trim();
+
+        // Nếu thành tiền là 0, không cần phải kiểm tra tiền mặt
+        if (thanhToan.compareTo(BigDecimal.ZERO) == 0) {
+            return true; // Không cần validate nếu thành tiền là 0
+        }
+
+        // Kiểm tra trường rỗng
+        if (tienMatStr.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng nhập số tiền mặt.");
+            txtTienMat.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra độ dài không vượt quá 20 ký tự
+        if (tienMatStr.length() > 20) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số tiền mặt không được vượt quá 20 ký tự.");
+            txtTienMat.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra xem chỉ chứa các ký tự số và không chứa ký tự "-"
+        if (!tienMatStr.matches("^\\d+$")) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số tiền mặt phải là số và không được chứa ký tự đặc biệt.");
+            txtTienMat.requestFocus();
+            return false;
+        }
+
+        // Chuyển đổi thành số BigDecimal để kiểm tra số không âm
+        BigDecimal tienMat = new BigDecimal(tienMatStr);
+        if (tienMat.compareTo(BigDecimal.ZERO) < 0) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số tiền mặt không được là số âm.");
+            txtTienMat.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean validateTienCK() {
+        // Lấy giá trị thành tiền từ giao diện
+        BigDecimal thanhToan = new BigDecimal(txtThanhToan.getText().trim());
+        String tienCKStr = txtTienCK.getText().trim();
+
+        // Nếu thành tiền là 0, không cần phải kiểm tra tiền chuyển khoản
+        if (thanhToan.compareTo(BigDecimal.ZERO) == 0) {
+            return true; // Không cần validate nếu thành tiền là 0
+        }
+
+        // Kiểm tra trường rỗng
+        if (tienCKStr.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng nhập số tiền chuyển khoản.");
+            txtTienCK.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra độ dài không vượt quá 20 ký tự
+        if (tienCKStr.length() > 20) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số tiền chuyển khoản không được vượt quá 20 ký tự.");
+            txtTienCK.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra xem chỉ chứa các ký tự số và không chứa ký tự "-"
+        if (!tienCKStr.matches("^\\d+$")) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số tiền chuyển khoản phải là số và không được chứa ký tự đặc biệt.");
+            txtTienCK.requestFocus();
+            return false;
+        }
+
+        // Chuyển đổi thành số BigDecimal để kiểm tra số không âm
+        BigDecimal tienCK = new BigDecimal(tienCKStr);
+        if (tienCK.compareTo(BigDecimal.ZERO) < 0) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số tiền chuyển khoản không được là số âm.");
+            txtTienCK.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void xoaMemHD(String hoaDonID) {
+        model = (DefaultTableModel) tblHoaDon.getModel();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (model.getValueAt(i, 1).equals(hoaDonID)) {
+                model.removeRow(i);
+                break; // Sau khi loại bỏ, thoát khỏi vòng lặp
+            }
+        }
+    }
+
+    private boolean validateSDT() {
+        // Validate txtTimSDT
+        String timSDT = txtTimSDT.getText().trim();
+        if (timSDT.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng nhập số điện thoại!");
+            txtTimSDT.requestFocus();
+            return false;
+        }
+        if (!timSDT.matches("\\d+")) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số điện thoại chỉ được chứa các chữ số!");
+            txtTimSDT.requestFocus();
+            return false;
+        }
+        if (timSDT.length() > 10) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số điện thoại không được vượt quá 10 ký tự!");
+            txtTimSDT.requestFocus();
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -369,7 +646,7 @@ public final class Sell extends TabbedForm {
         jScrollPane1.setViewportView(tblHoaDon);
 
         cboTrangThai.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        cboTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Chờ thanh toán", "Tất cả", "Đã thanh toán", "Đã hủy" }));
+        cboTrangThai.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Chờ thanh toán" }));
         cboTrangThai.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cboTrangThaiActionPerformed(evt);
@@ -479,6 +756,11 @@ public final class Sell extends TabbedForm {
         btnDeleteGH.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         btnDeleteGH.setIcon(new javax.swing.ImageIcon(getClass().getResource("/app/png/trash.png"))); // NOI18N
         btnDeleteGH.setText("Xóa");
+        btnDeleteGH.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeleteGHActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -644,6 +926,11 @@ public final class Sell extends TabbedForm {
         btnTimKiem.setForeground(new java.awt.Color(255, 255, 255));
         btnTimKiem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/app/png/computer.png"))); // NOI18N
         btnTimKiem.setText("Tìm kiếm");
+        btnTimKiem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnTimKiemActionPerformed(evt);
+            }
+        });
 
         jLabel6.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel6.setText("Tên khách hàng");
@@ -656,6 +943,11 @@ public final class Sell extends TabbedForm {
         btnOpenKH.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         btnOpenKH.setIcon(new javax.swing.ImageIcon(getClass().getResource("/app/png/customer.png"))); // NOI18N
         btnOpenKH.setText("Chọn");
+        btnOpenKH.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnOpenKHActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -945,34 +1237,45 @@ public final class Sell extends TabbedForm {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tblHoaDonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblHoaDonMouseClicked
+
         // Lấy chỉ số hàng được chọn
         int selectedRow = tblHoaDon.getSelectedRow();
 
         // Kiểm tra hàng được chọn có hợp lệ không
         if (selectedRow >= 0) {
-            this.showData(selectedRow);
+            // Lấy ID hóa đơn từ hàng được chọn
+            String hoaDonID = tblHoaDon.getValueAt(selectedRow, 1).toString();
+
+            // Sử dụng setter để cập nhật selectedHoaDonID
+            setSelectedHoaDonID(hoaDonID);
+
+            // Hiển thị thông tin chi tiết của hoá đơn lên form
+            showData(selectedRow);
             btnOpenKH.setEnabled(false);
+
             // Lấy giá trị voucher và hình thức thanh toán của hàng được chọn
-            selectedHoaDonID = tblHoaDon.getValueAt(selectedRow, 1).toString();
             String selectedVoucher = tblHoaDon.getValueAt(selectedRow, 5).toString();
             String selectedHTTT = tblHoaDon.getValueAt(selectedRow, 7).toString();
+
             // Kiểm tra trạng thái của hoá đơn
             String trangThai = tblHoaDon.getValueAt(selectedRow, 8).toString().trim();
             if (trangThai.equals("Đã thanh toán") || trangThai.equals("Đã hủy")) {
-                // Nếu trạng thái là "Đã thanh toán" hoặc "Đã hủy", tắt đi các nút
+                // Nếu trạng thái là "Đã thanh toán" hoặc "Đã hủy", tắt đi các nút
                 btnHuyDon.setEnabled(false);
                 btnSuccesHoaDon.setEnabled(false);
                 btnDeleteGH.setEnabled(false);
-
             } else {
-                // Nếu trạng thái không phải là "Đã thanh toán" hoặc "Đã hủy", bật lại các nút
+                // Nếu trạng thái không phải là "Đã thanh toán" hoặc "Đã hủy", bật lại các nút
                 btnHuyDon.setEnabled(true);
                 btnSuccesHoaDon.setEnabled(true);
                 btnDeleteGH.setEnabled(true);
             }
-            System.out.println("BẠN ĐÃ NHẤN:  " + selectedHoaDonID);
+
+            System.out.println("BẠN ĐÃ NHẤN: " + getSelectedHoaDonID());
+
             // Cập nhật lại bảng tblGioHang với dữ liệu của hóa đơn đã chọn
-            fillChiTietHoaDonTable(selectedHoaDonID);
+            fillChiTietHoaDonTable(getSelectedHoaDonID());
+
             // Chọn voucher tương ứng trong combobox
             for (int i = 0; i < cboVoucher.getItemCount(); i++) {
                 if (cboVoucher.getItemAt(i).equals(selectedVoucher)) {
@@ -991,33 +1294,67 @@ public final class Sell extends TabbedForm {
         } else {
             // Nếu không có hoá đơn nào được chọn, làm sạch form và tắt các nút
             cleanForm();
+            setSelectedHoaDonID(null); // Đặt selectedHoaDonID về null
             btnHuyDon.setEnabled(true);
             btnSuccesHoaDon.setEnabled(true);
             btnDeleteGH.setEnabled(true);
         }
+
     }//GEN-LAST:event_tblHoaDonMouseClicked
 
     private void cboTrangThaiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboTrangThaiActionPerformed
         String selectedTrangThai = (String) cboTrangThai.getSelectedItem();
         List<BillModel> listHD;
-
-        if (selectedTrangThai.equals("Tất cả")) {
-            listHD = bhrs.getAllHD1();
-        } else if (selectedTrangThai.equals("Đã thanh toán")) {
-            listHD = bhrs.getDaThanhToanHoaDon();
-        } else if (selectedTrangThai.equals("Đã hủy")) {
-            listHD = bhrs.getDaHuyHoaDon();
-        } else if (selectedTrangThai.equals("Chờ thanh toán")) {
-            listHD = bhrs.getHoaDonChoThanhToan();
-        } else {
-            listHD = bhrs.getAllHD1();
-        }
-
-        fillTable2(listHD);
+        listHD = bhrs.getHoaDonChoThanhToan();
     }//GEN-LAST:event_cboTrangThaiActionPerformed
 
     private void btnHuyDonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHuyDonActionPerformed
-        // TODO add your handling code here:
+        model = (DefaultTableModel) tblHoaDon.getModel();
+        int index = tblHoaDon.getSelectedRow();
+
+        if (index == -1) {
+            Notifications.getInstance().show(Notifications.Type.ERROR, "Vui lòng chọn hoá đơn để hủy");
+            return;
+        }
+
+        String hoaDonID = model.getValueAt(index, 1).toString(); // Lấy ID của hoá đơn được chọn
+
+        MessageAlerts.getInstance().showMessage("Xác nhận",
+                "Bạn có muốn hủy hoá đơn này không?",
+                MessageAlerts.MessageType.SUCCESS,
+                MessageAlerts.YES_NO_OPTION, (PopupController pc, int i) -> {
+                    if (i == MessageAlerts.YES_OPTION) {
+                        // Thực hiện hủy hoá đơn
+                        if (bhrs.huyHDByID("Đã hủy", hoaDonID)) {
+                            // Nếu hủy thành công, cập nhật lại số lượng tồn của sản phẩm chi tiết và tổng tiền của hoá đơn
+                            List<BillDetailModel> chiTietHoaDons = bhrs.searchByHoaDonID(hoaDonID);
+
+                            for (BillDetailModel chiTietHoaDon : chiTietHoaDons) {
+                                String maSanPhamChiTiet = chiTietHoaDon.getMactsp().getID();
+                                int soLuong = chiTietHoaDon.getSoLuong();
+
+                                // Cập nhật số lượng tồn của sản phẩm chi tiết
+                                int soLuongTonHienTai = bhrs.laySoLuongTonByID(maSanPhamChiTiet);
+                                bhrs.updateSoLuongTon(maSanPhamChiTiet, soLuongTonHienTai + soLuong);
+
+                                // Xoá hoá đơn chi tiết
+                                bhrs.xoaHoaDonChiTiet(maSanPhamChiTiet, hoaDonID);
+                            }
+
+                            // Cập nhật tổng tiền của hoá đơn thành 0
+                            bhrs.updateBillWhileDeleteALL(hoaDonID);
+
+                            // Cập nhật lại bảng hiển thị và thông báo thành công
+                            fillTable2(bhrs.getHoaDonChoThanhToan()); // Cập nhật lại bảng hoá đơn chính
+                            fillTable(bhrs.getAllCTSP());
+                            model = (DefaultTableModel) tblGioHang.getModel();
+                            model.setRowCount(0);
+                            Notifications.getInstance().show(Notifications.Type.SUCCESS, "Hủy hoá đơn thành công!");
+                        } else {
+                            Notifications.getInstance().show(Notifications.Type.ERROR, "Hủy hoá đơn thất bại!");
+                        }
+                    }
+                });
     }//GEN-LAST:event_btnHuyDonActionPerformed
 
     private void btnTaoHDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTaoHDActionPerformed
@@ -1033,7 +1370,7 @@ public final class Sell extends TabbedForm {
 
             // Nếu không tìm thấy ID từ tên khách hàng, sử dụng ID mặc định là "KH00"
             if (idKhachHang == null || idKhachHang.isEmpty()) {
-                idKhachHang = "KH00";
+                idKhachHang = "KH000";
             }
 
             // Gọi phương thức tạo hóa đơn với ID nhân viên và ID khách hàng
@@ -1041,28 +1378,49 @@ public final class Sell extends TabbedForm {
 
             // Xử lý kết quả
             if (result == 1) {
-                fillTable2(bhrs.getAllHD1());
                 fillTable2(bhrs.getHoaDonChoThanhToan());
-                JOptionPane.showMessageDialog(this, "Tạo hóa đơn thành công");
+                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Tạo hóa đơn thành công");
             } else {
-                JOptionPane.showMessageDialog(this, "Không thể tạo hóa đơn");
+                Notifications.getInstance().show(Notifications.Type.ERROR, "Không thể tạo hóa đơn");
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Vui lòng đăng nhập");
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng đăng nhập");
         }
     }//GEN-LAST:event_btnTaoHDActionPerformed
 
     private void tblGioHangMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblGioHangMouseClicked
-        // TODO add your handling code here:
+        int column = tblGioHang.columnAtPoint(evt.getPoint()); // Lấy cột được nhấp vào
+
+        // Kiểm tra xem sự kiện selectAll đã được kích hoạt hay không
+        boolean selectAllActivated = selectAll.isSelected();
+
+        // Nếu cột được nhấp vào là cột "Chọn" và selectAll được kích hoạt
+        if (column == 5 && selectAllActivated) {
+            int selectedRow = tblGioHang.rowAtPoint(evt.getPoint()); // Lấy hàng được nhấp vào
+            if (selectedRow >= 0) {
+                // Lấy giá trị của cột "Chọn" khi một dòng được chọn
+                Object value = tblGioHang.getValueAt(selectedRow, column);
+                if (value instanceof Boolean) {
+                    boolean selected = (boolean) value;
+                    // Đảo ngược trạng thái của cột "Chọn"
+                    tblGioHang.setValueAt(!selected, selectedRow, column);
+                }
+            }
+        }
     }//GEN-LAST:event_tblGioHangMouseClicked
 
     private void selectAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllActionPerformed
-        // TODO add your handling code here:
+        DefaultTableModel model = (DefaultTableModel) tblGioHang.getModel();
+        int rowCount = model.getRowCount();
+        for (int i = 0; i < rowCount; i++) {
+            model.setValueAt(selectAll.isSelected(), i, 5); // Đặt trạng thái của cột "Chọn" thành giá trị
+            // của checkbox selectAll cho tất cả các hàng
+        }
     }//GEN-LAST:event_selectAllActionPerformed
 
     private void tblCTSPMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblCTSPMouseClicked
         int selectedRow = tblCTSP.getSelectedRow();
-        if (selectedHoaDonID == null) {
+        if (getSelectedHoaDonID() == null) {
             Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn một hoá đơn trước khi thêm sản phẩm vào giỏ hàng!");
             return;
         }
@@ -1244,24 +1602,83 @@ public final class Sell extends TabbedForm {
     private void cboHTTTItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboHTTTItemStateChanged
         if (evt.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
             String selectedOption = (String) cboHTTT.getSelectedItem();
+            BigDecimal thanhToan = new BigDecimal(txtThanhToan.getText().trim());
 
-            if (selectedOption.equals("Tiền mặt")) {
-                txtTienCK.setText(null);
-                txtTienCK.setEnabled(false); // Tắt ô txtTienCK
-                txtTienMat.setEnabled(true);
-            } else if (selectedOption.equals("Chuyển khoản")) {
-                txtTienMat.setText(null);
-                txtTienMat.setEnabled(false); // Tắt ô txtTienMat
-                txtTienCK.setEnabled(true);
-            } else if (selectedOption.equals("Kết hợp")) {
-                txtTienMat.setEnabled(true);
-                txtTienCK.setEnabled(true);
+            if (thanhToan.compareTo(BigDecimal.ZERO) == 0) {
+                // Nếu tổng tiền thanh toán bằng 0, mặc định đặt các ô nhập tiền là 0
+                if (selectedOption.equals("Tiền mặt")) {
+                    txtTienMat.setText("0");
+                    txtTienCK.setText(null);
+                    txtTienCK.setEnabled(false); // Tắt ô txtTienCK
+                    txtTienMat.setEnabled(true);
+                } else if (selectedOption.equals("Chuyển khoản")) {
+                    txtTienCK.setText("0");
+                    txtTienMat.setText(null);
+                    txtTienMat.setEnabled(false); // Tắt ô txtTienMat
+                    txtTienCK.setEnabled(true);
+                } else if (selectedOption.equals("Kết hợp")) {
+                    txtTienMat.setText("0");
+                    txtTienCK.setText("0");
+                    txtTienMat.setEnabled(true);
+                    txtTienCK.setEnabled(true);
+                }
+            } else {
+                // Nếu tổng tiền thanh toán không bằng 0, cho phép người dùng nhập giá trị bình thường
+                if (selectedOption.equals("Tiền mặt")) {
+                    txtTienCK.setText(null);
+                    txtTienCK.setEnabled(false); // Tắt ô txtTienCK
+                    txtTienMat.setEnabled(true);
+                } else if (selectedOption.equals("Chuyển khoản")) {
+                    txtTienMat.setText(null);
+                    txtTienMat.setEnabled(false); // Tắt ô txtTienMat
+                    txtTienCK.setEnabled(true);
+                } else if (selectedOption.equals("Kết hợp")) {
+                    txtTienMat.setEnabled(true);
+                    txtTienCK.setEnabled(true);
+                }
             }
         }
     }//GEN-LAST:event_cboHTTTItemStateChanged
 
     private void cboVoucherItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cboVoucherItemStateChanged
-        // TODO add your handling code here:
+        if (evt.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+            String selectedVoucher = (String) cboVoucher.getSelectedItem();
+
+            if (!txtTongTien.getText().isEmpty()) {
+                BigDecimal tongTien = new BigDecimal(txtTongTien.getText());
+
+                // Lấy ID của voucher từ tên voucher đã chọn
+                String voucherId = bhrs.getIdByTenVoucher(selectedVoucher);
+
+                // Lấy loại voucher từ tên voucher đã chọn
+                String loaiVoucher = bhrs.getLoaiVoucherByTenVoucher(selectedVoucher);
+
+                // Lấy mức giảm giá từ voucher để tính lại tổng tiền sau khi giảm giá
+                BigDecimal discountAmount = bhrs.getMucGiamGiaByTenVoucher(selectedVoucher);
+                if (discountAmount != null) {
+                    BigDecimal thanhToan = BigDecimal.ZERO;
+                    if ("Giảm theo phần trăm".equals(loaiVoucher)) {
+                        BigDecimal phanTramGiam = discountAmount.divide(BigDecimal.valueOf(100));
+                        BigDecimal tienGiam = tongTien.multiply(phanTramGiam);
+                        thanhToan = tongTien.subtract(tienGiam);
+                    } else if ("Giảm theo giá tiền".equals(loaiVoucher)) {
+                        thanhToan = tongTien.subtract(discountAmount);
+                    } else {
+                        Notifications.getInstance().show(Notifications.Type.WARNING, "Loại voucher không hợp lệ.");
+                        return;
+                    }
+
+                    // Kiểm tra nếu thành tiền < 0 thì đặt thành tiền = 0
+                    if (thanhToan.compareTo(BigDecimal.ZERO) < 0) {
+                        thanhToan = BigDecimal.ZERO;
+                    }
+
+                    txtThanhToan.setText(thanhToan.toPlainString());
+                } else {
+                    Notifications.getInstance().show(Notifications.Type.WARNING, "Mức giảm giá của voucher không hợp lệ.");
+                }
+            }
+        }
     }//GEN-LAST:event_cboVoucherItemStateChanged
 
     private void txtThanhToanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtThanhToanActionPerformed
@@ -1269,7 +1686,112 @@ public final class Sell extends TabbedForm {
     }//GEN-LAST:event_txtThanhToanActionPerformed
 
     private void btnSuccesHoaDonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSuccesHoaDonActionPerformed
-        // TODO add your handling code here:
+        BillModel hdm = read();
+        if (hdm == null) {
+            return; // Trả về nếu dữ liệu hóa đơn không hợp lệ
+        }
+
+        // Lấy giá trị thành tiền hiện tại từ giao diện
+        BigDecimal thanhToan = new BigDecimal(txtThanhToan.getText().trim());
+        String selectedVoucher = cboVoucher.getSelectedItem().toString();
+        String voucherId = bhrs.getIdByTenVoucher(selectedVoucher);
+
+        if (voucherId != null) {
+            VoucherModer voucher = new VoucherModer(voucherId);
+            hdm.setTenVoucher(voucher);
+            String tenVoucher = bhrs.getTenByIDVoucher(voucherId);
+            BigDecimal tienMat = BigDecimal.ZERO;
+            BigDecimal chuyenKhoan = BigDecimal.ZERO;
+
+            String hinhThucThanhToan = cboHTTT.getSelectedItem().toString();
+
+            if (hinhThucThanhToan.equals("Tiền mặt")) {
+                if (validateTienMat()) {
+                    tienMat = new BigDecimal(txtTienMat.getText().trim());
+                } else if (thanhToan.compareTo(BigDecimal.ZERO) == 0) {
+                    txtTienMat.setText("0");
+                    tienMat = BigDecimal.ZERO;
+                } else {
+                    return; // Dữ liệu tiền mặt không hợp lệ
+                }
+            } else if (hinhThucThanhToan.equals("Chuyển khoản")) {
+                if (validateTienCK()) {
+                    chuyenKhoan = new BigDecimal(txtTienCK.getText().trim());
+                } else if (thanhToan.compareTo(BigDecimal.ZERO) == 0) {
+                    txtTienCK.setText("0");
+                    chuyenKhoan = BigDecimal.ZERO;
+                } else {
+                    return; // Dữ liệu chuyển khoản không hợp lệ
+                }
+            } else if (hinhThucThanhToan.equals("Kết hợp")) {
+                if (validateTienMat() && validateTienCK()) {
+                    tienMat = new BigDecimal(txtTienMat.getText().trim());
+                    chuyenKhoan = new BigDecimal(txtTienCK.getText().trim());
+                } else if (thanhToan.compareTo(BigDecimal.ZERO) == 0) {
+                    txtTienMat.setText("0");
+                    txtTienCK.setText("0");
+                    tienMat = BigDecimal.ZERO;
+                    chuyenKhoan = BigDecimal.ZERO;
+                } else {
+                    return; // Dữ liệu kết hợp không hợp lệ
+                }
+            }
+
+            // Tính tiền thừa dựa trên giá trị thành tiền hiện tại
+            BigDecimal tienThua = tienMat.add(chuyenKhoan).subtract(thanhToan);
+            txtTienThua.setText(tienThua.toString());
+
+            int selectedRow = tblHoaDon.getSelectedRow();
+            if (selectedRow >= 0) {
+                tblHoaDon.setValueAt(tenVoucher, selectedRow, 5);
+                tblHoaDon.setValueAt(hinhThucThanhToan, selectedRow, 7);
+            } else {
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn một hóa đơn để thanh toán.");
+                return;
+            }
+
+            if (selectedHoaDonID != null && !selectedHoaDonID.isEmpty()) {
+                String idNhanVien = Auth.user.getId();
+                int updateResult = bhrs.updateIdNhanVienChoHoaDon(selectedHoaDonID, idNhanVien);
+                if (updateResult == 0) {
+                    Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật thông tin nhân viên cho hóa đơn không thành công!");
+                    return;
+                }
+
+                boolean updateVoucher = bhrs.updateVoucherHoaDon(selectedHoaDonID, voucherId);
+                boolean updated = bhrs.updateHTTTHoaDon(selectedHoaDonID, hinhThucThanhToan);
+
+                if (!updated) {
+                    Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật hình thức thanh toán không thành công!");
+                    return;
+                } else if (!updateVoucher) {
+                    Notifications.getInstance().show(Notifications.Type.ERROR, "Cập nhật voucher không thành công!");
+                    return;
+                }
+
+                if (tienThua.compareTo(BigDecimal.ZERO) >= 0) {
+                    updateHoaDonTrangThai(selectedHoaDonID, tienThua);
+                    xoaMemHD(selectedHoaDonID);
+                } else {
+                    Notifications.getInstance().show(Notifications.Type.WARNING, "Số tiền nhập vào không được nhỏ hơn số tiền phải thanh toán.");
+                    txtTienThua.setText("0");
+                    txtTienThua.requestFocus();
+                    return;
+                }
+            } else {
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn một hóa đơn để thanh toán.");
+                return;
+            }
+
+            // Hiển thị kết quả
+            txtThanhToan.setText(thanhToan.toString());
+            txtTienThua.setText(tienThua.toString());
+
+            // Cập nhật bảng sau khi thanh toán
+            fillTable2(bhrs.getHoaDonChoThanhToan());
+        } else {
+            Notifications.getInstance().show(Notifications.Type.ERROR, "Không tìm thấy ID cho voucher đã chọn.");
+        }
     }//GEN-LAST:event_btnSuccesHoaDonActionPerformed
 
     private void btnClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearActionPerformed
@@ -1289,6 +1811,98 @@ public final class Sell extends TabbedForm {
         }
         cleanForm();
     }//GEN-LAST:event_btnClearActionPerformed
+
+    private void btnOpenKHActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenKHActionPerformed
+        chonKhachHangDialog.setVisible(true);
+    }//GEN-LAST:event_btnOpenKHActionPerformed
+
+    private void btnDeleteGHActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteGHActionPerformed
+        DefaultTableModel modelHDCT = (DefaultTableModel) tblGioHang.getModel();
+        int rowCount = modelHDCT.getRowCount();
+        boolean isSelectAllChecked = selectAll.isSelected();
+        System.out.println("Select All activated: " + isSelectAllChecked);
+
+        String tempSelectedHoaDonID = getSelectedHoaDonID();
+
+        if (tempSelectedHoaDonID != null && isSelectAllChecked) {
+            System.out.println("Executing delete all items.");
+
+            List<BillDetailModel> chiTietHoaDons = bhrs.searchByHoaDonID(tempSelectedHoaDonID);
+
+            for (BillDetailModel chiTietHoaDon : chiTietHoaDons) {
+                String maSanPhamChiTiet = chiTietHoaDon.getMactsp().getID();
+                int soLuong = chiTietHoaDon.getSoLuong();
+                int soLuongTonMoi = bhrs.laySoLuongTonByID(maSanPhamChiTiet) + soLuong;
+                bhrs.updateSoLuongTon(maSanPhamChiTiet, soLuongTonMoi);
+            }
+
+            int deleteResult = bhrs.xoaToanBoHoaDonChiTiet(tempSelectedHoaDonID);
+            if (deleteResult <= 0) {
+                Notifications.getInstance().show(Notifications.Type.ERROR, "Không thể xóa toàn bộ chi tiết hóa đơn!");
+                return;
+            }
+
+            boolean isBillUpdated = bhrs.updateBillWhileDeleteALL(tempSelectedHoaDonID);
+
+            // Khôi phục lại giá trị của selectedHoaDonID sau khi xóa
+            selectedHoaDonID = tempSelectedHoaDonID;
+
+            fillChiTietHoaDonTable(selectedHoaDonID);
+            refreshFormData();
+            fillTable2(bhrs.getHoaDonChoThanhToan());
+
+        } else {
+            System.out.println("Executing delete selected items.");
+
+            List<String> selectedProductDetailIds = new ArrayList<>();
+
+            for (int i = rowCount - 1; i >= 0; i--) {
+                Boolean isSelected = (Boolean) modelHDCT.getValueAt(i, 5); // Cột 5 là cột "Chọn"
+                if (isSelected != null && isSelected) {
+                    String maSanPhamChiTiet = modelHDCT.getValueAt(i, 0).toString();
+                    System.out.println("Selected Product Detail ID: " + maSanPhamChiTiet);
+                    selectedProductDetailIds.add(maSanPhamChiTiet);
+                }
+            }
+
+            if (selectedProductDetailIds.isEmpty()) {
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng chọn sản phẩm để xóa.");
+                return;
+            }
+
+            for (String maCTSP : selectedProductDetailIds) {
+                BillDetailModel hdct = bhrs.getHDCT_BY_Id_HD_Id_SPCT(tempSelectedHoaDonID, maCTSP);
+                ProductDetailModel spct = bhrs.get_SPCT_BY_Id_SPCT(maCTSP);
+                int updatedQuantity = hdct.getSoLuong() + spct.getSoLuongTon();
+                int updateQuantityResult = bhrs.updateSoLuongTon(maCTSP, updatedQuantity);
+                int deleteHDCTResult = bhrs.xoaHoaDonChiTiet(maCTSP, tempSelectedHoaDonID);
+            }
+
+            bhrs.updateBillWhileDeleteOne(tempSelectedHoaDonID);
+
+        }
+
+        refreshFormData();
+        refreshGioHangTable();
+        Notifications.getInstance().show(Notifications.Type.SUCCESS, "Xóa thành công!");
+        selectAll.setSelected(false);
+    }//GEN-LAST:event_btnDeleteGHActionPerformed
+
+    private void btnTimKiemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTimKiemActionPerformed
+        String sdt = txtTimSDT.getText().trim();
+
+        if (!validateSDT()) {
+            return;
+        }
+
+        CustomerModel kh = bhrs.findBySDT(sdt);
+
+        if (kh != null) {
+            txtTenKH.setText(kh.getTen());
+        } else {
+            Notifications.getInstance().show(Notifications.Type.ERROR, "Không tìm thấy thông tin khách hàng bạn muốn tìm !");
+        }
+    }//GEN-LAST:event_btnTimKiemActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

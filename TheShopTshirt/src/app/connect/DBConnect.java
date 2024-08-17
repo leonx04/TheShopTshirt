@@ -10,9 +10,9 @@ public class DBConnect {
 
     public static final String HOSTNAME = "localhost";
     public static final String PORT = "1433";
-    public static final String DBNAME = "SHOPTSHIRT";
+    public static final String DBNAME = "DUAN1_TEAM6";
     public static final String USERNAME = "sa";
-    public static final String PASSWORD = "123456";
+    public static final String PASSWORD = "123";
 
     public static Connection getConnection() {
         String connectionUrl = "jdbc:sqlserver://" + HOSTNAME + ":" + PORT + ";"
@@ -40,7 +40,7 @@ public class DBConnect {
                 pstm.close();
             }
         } catch (SQLException ex) {
-            System.out.println("Lỗi tại ExcuteDungna");
+            System.out.println("Lỗi tại Excute");
             ex.printStackTrace();
             return 0;
         }

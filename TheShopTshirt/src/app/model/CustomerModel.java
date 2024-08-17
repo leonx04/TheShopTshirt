@@ -9,15 +9,16 @@ package app.model;
  * @author ADMIN
  */
 public class CustomerModel {
-    private String id ;
+     private String id ;
     private String ten;
     private String sdt;
     private String diachi;
     private String email;
     private String gioiTinh;
     private int stt;
+    private String trangThai;
 
-    public CustomerModel(String id, String ten, String sdt, String diachi, String email, String gioiTinh, int stt) {
+    public CustomerModel(String id, String ten, String sdt, String diachi, String email, String gioiTinh, String trangThai ) {
         this.id = id;
         this.ten = ten;
         this.sdt = sdt;
@@ -25,6 +26,16 @@ public class CustomerModel {
         this.email = email;
         this.gioiTinh = gioiTinh;
         this.stt = stt;
+        this.trangThai = trangThai;
+    }
+    
+    public CustomerModel(String id, String ten, String sdt, String diachi, String email, String gioiTinh) {
+        this.id = id;
+        this.ten = ten;
+        this.sdt = sdt;
+        this.diachi = diachi;
+        this.email = email;
+        this.gioiTinh = gioiTinh;
     }
 
     public CustomerModel() {
@@ -61,6 +72,10 @@ public class CustomerModel {
     public int getStt() {
         return stt;
     }
+    
+     public String getTrangThai() {
+        return trangThai;
+    }
 
     public void setId(String id) {
         this.id = id;
@@ -90,6 +105,10 @@ public class CustomerModel {
         this.stt = stt;
     }
     
+     public void setTrangThai(String trangThai) {
+        this.trangThai = trangThai;
+    }
+    
     public Object[] toData() {
         return new Object[]{
             this.stt,
@@ -98,7 +117,8 @@ public class CustomerModel {
             this.sdt,
             this.diachi,
             this.email,
-            this.gioiTinh
+            this.gioiTinh,
+            this.trangThai
         };
     }
     

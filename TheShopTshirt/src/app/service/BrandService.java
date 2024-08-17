@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -62,22 +63,6 @@ public class BrandService {
         return false; // Trả về false nếu có lỗi xảy ra
     }
 
-    public boolean checkTrungID(String id) {
-        sql = "SELECT COUNT(*) AS count FROM THUONGHIEU WHERE ID = ?";
-        try {
-            con = DBConnect.getConnection();
-            ps = con.prepareStatement(sql);
-            ps.setString(1, id);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                int count = rs.getInt("count");
-                // Nếu count > 0, tức là ID đã tồn tại
-                return count > 0;
-            }
-        } catch (SQLException e) {
-        }
-        return false; // Trả về false nếu có lỗi xảy ra
-    }
 
     public List<BrandModel> getIDByTenTH(String tenTH) {
         sql = "SELECT ID, Ten, MoTa FROM THUONGHIEU WHERE Ten = ?";
@@ -100,40 +85,54 @@ public class BrandService {
         return listTH;
     }
 
+    /**
+     * Tạo một ID mới cho thương hiệu sử dụng UUID, đảm bảo rằng ID không bị trùng lặp.
+     * 
+     * Hàm này tạo một UUID mới, chuyển đổi nó thành chuỗi và rút ngắn chuỗi này để tạo ID.
+     * Sau đó kiểm tra trong cơ sở dữ liệu để đảm bảo ID mới không bị trùng lặp.
+     * Nếu ID bị trùng lặp, hàm sẽ tiếp tục tạo ID mới cho đến khi tìm được ID không trùng lặp.
+     * 
+     * @return Một ID mới không trùng lặp cho thương hiệu.
+     */
     public String getNewIDTH() {
-        // Mã sản phẩm mặc định
-        String newID = "TH001";
-        try {
-            // Truy vấn SQL để lấy số thứ tự lớn nhất của mã sản phẩm từ cơ sở dữ liệu
-            sql = "SELECT MAX(CAST(SUBSTRING(ID, 4, LEN(ID)) AS INT)) AS maxID FROM THUONGHIEU";
-            // trong truy vấn SQL, MAX(CAST(SUBSTRING(ID, 4, LEN(ID)) AS INT)) được sử dụng
-            // để lấy số thứ tự lớn nhất của các mã sản phẩm trong cơ sở dữ liệu.
-            // SUBSTRING(ID, 4, LEN(ID)) được sử dụng để cắt bỏ ba ký tự đầu tiên của mã
-            // chất
-            // liệu (trong trường hợp này là "CL"),
-            // sau đó chuyển thành kiểu số nguyên bằng CAST.
-            // Kết nối đến cơ sở dữ liệu
-            con = DBConnect.getConnection();
-            // Tạo đối tượng PreparedStatement từ truy vấn SQL
-            ps = con.prepareStatement(sql);
-            // Thực hiện truy vấn và lưu kết quả vào ResultSet
-            rs = ps.executeQuery();
-            // Kiểm tra xem ResultSet có kết quả hay không
-            if (rs.next()) {
-                // Nếu có kết quả, lấy giá trị số thứ tự lớn nhất từ cột "maxID"
-                int maxID = rs.getInt("maxID");
-                // Tăng giá trị số thứ tự lên một đơn vị
-                maxID++;
-                // Tạo mã mới từ số thứ tự lớn nhất và định dạng lại để có hai chữ số
-                newID = "TH" + String.format("%03d", maxID);
-                // %03d là định dạng cho số nguyên với độ dài tối thiểu là 3 chữ số. Điều này
-                // đảm bảo rằng số thứ tự sẽ được đặt sau chuỗi "CL" và luôn có ít nhất 3 chữ
-                // số, được điền bằng số 0 nếu cần.
+        String newID;
+        boolean idExists;
+        do {
+            // Tạo một UUID mới và lấy phần đầu của nó để tạo ID ngắn hơn
+            newID = "TH" + UUID.randomUUID().toString().substring(0, 8);
+
+            try {
+                // Kiểm tra xem ID mới có bị trùng lặp hay không
+                idExists = checkTrungID(newID);
+            } catch (SQLException e) {
+                // Nếu có lỗi xảy ra trong quá trình kiểm tra, đặt idExists thành true để thử lại
+                idExists = true;
             }
-        } catch (SQLException e) {
-        }
-        // Trả về mã sản phẩm mới hoặc mã mặc định nếu có lỗi xảy ra
+        } while (idExists); // Lặp lại cho đến khi tìm được ID không trùng lặp
+
         return newID;
+    }
+
+    /**
+     * Kiểm tra xem ID đã tồn tại trong bảng THUONGHIEU hay chưa.
+     * 
+     * @param id ID cần kiểm tra.
+     * @return true nếu ID tồn tại, false nếu không.
+     * @throws SQLException nếu có lỗi xảy ra khi truy vấn cơ sở dữ liệu.
+     */
+    public boolean checkTrungID(String id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS count FROM THUONGHIEU WHERE ID = ?";
+        try (Connection con = DBConnect.getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt("count");
+                    return count > 0; // Nếu count > 0, tức là ID đã tồn tại
+                }
+            }
+        }
+        return false; // Nếu không có bản ghi nào khớp
     }
 
     public int insert(BrandModel th) {

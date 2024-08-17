@@ -141,11 +141,8 @@
               <Font name="Segoe UI" size="14" style="0"/>
             </Property>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="4">
+              <StringArray count="1">
                 <StringItem index="0" value="Ch&#x1a1;&#x300; thanh toa&#x301;n"/>
-                <StringItem index="1" value="T&#xe2;&#x301;t ca&#x309;"/>
-                <StringItem index="2" value="&#x110;a&#x303; thanh toa&#x301;n"/>
-                <StringItem index="3" value="&#x110;a&#x303; hu&#x309;y"/>
               </StringArray>
             </Property>
           </Properties>
@@ -303,6 +300,9 @@
             </Property>
             <Property name="text" type="java.lang.String" value="X&#xf3;a"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnDeleteGHActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>
@@ -643,6 +643,9 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="T&#xec;m ki&#x1ebf;m"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnTimKiemActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel6">
               <Properties>
@@ -674,6 +677,9 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="Ch&#x1ecd;n"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnOpenKHActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

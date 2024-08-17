@@ -4,18 +4,161 @@
  */
 package app.form.other;
 
+import app.form.Sell;
+import app.model.CustomerModel;
+import app.service.CustomerService;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.util.List;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
+import raven.alerts.MessageAlerts;
+import raven.popup.component.PopupCallbackAction;
+import raven.popup.component.PopupController;
+import raven.toast.Notifications;
+
 /**
  *
  * @author dungn
  */
 public class CustomerNew extends javax.swing.JDialog {
 
+    private DefaultTableModel model = new DefaultTableModel();
+//    private KhachHangService khrs = new KhachHangService();
+    private CustomerModel selectedKhachHang;
+    private String tenKhachHangChon; // Biến để lưu trữ tên khách hàng được chọn
+    private Sell formBanHangPanel;
+    private CustomerService customerService;
+
     /**
      * Creates new form CustomerNew
+     *
+     * @param formBanHangPanel
+     * @param modal
      */
-    public CustomerNew(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    public CustomerNew(Sell formBanHangPanel, boolean modal) {
+        super((Frame) SwingUtilities.getWindowAncestor(formBanHangPanel), modal);
+        this.formBanHangPanel = formBanHangPanel;
         initComponents();
+        customerService = new CustomerService();
+        this.setLocationRelativeTo(null);
+        setSize(new Dimension(1100, 600));
+        setTitle("Khách hàng");
+        FIllTable();
+    }
+
+    // Code để fill dữ liệu khách hàng lên bảng , có mouse click  nhưng để đó t code nốt việc lấy dữ liệu truyền sang bán hàng
+    // M code sao cho hiển thị được, thêm được và làm mới form được 
+    private void chonKH() {
+        int row = this.tblKH.getSelectedRow();
+        if (row >= 0) {
+            String tenKH = tblKH.getValueAt(row, 2).toString().trim();
+            formBanHangPanel.updateTenKhachHang(tenKH);
+            this.dispose(); // Đóng cửa sổ ChonKhachHangDiaLog
+        }
+    }
+
+    private void FIllTable() {
+        model = (DefaultTableModel) tblKH.getModel();
+        model.setRowCount(0);
+        List<CustomerModel> customerModel = customerService.getAllCustomer();
+        for (int i = 0; i < customerModel.size(); i++) {
+            CustomerModel cus = customerModel.get(i);
+            cus.setStt(i + 1);
+
+            model.addRow(new Object[]{
+                cus.getStt(),
+                cus.getId(),
+                cus.getTen(),
+                cus.getSdt(),
+                cus.getDiachi(),
+                cus.getEmail(),
+                cus.getGioiTinh()
+            });
+        }
+    }
+
+    private boolean validateInput() {
+        String id = txtMa.getText().trim();
+        String hoTen = txtTen.getText().trim();
+        String email = txtEmail.getText().trim();
+        String sdt = txtSDT.getText().trim();
+        String diaChi = txtDiaChi.getText().trim();
+
+        // Kiểm tra các trường bắt buộc
+        if (hoTen.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng nhập họ tên Khách Hàng");
+            txtTen.requestFocus();
+            return false;
+        }
+        if (diaChi.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng nhập địa chỉ Khách Hàng");
+            txtDiaChi.requestFocus();
+            return false;
+        }
+        if (sdt.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng nhập số điện thoại Khách Hàng");
+            txtSDT.requestFocus();
+            return false;
+        }
+        if (email.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Vui lòng nhập email Khách Hàng");
+            txtEmail.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra độ dài
+        if (id.length() > 200 || hoTen.length() > 200 || email.length() > 200 || diaChi.length() > 200) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Các trường thông tin không được vượt quá 200 ký tự");
+            return false;
+        }
+        if (!sdt.matches("^\\d{10}$")) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Số điện thoại không hợp lệ, phải là 10 số");
+            txtSDT.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra email hợp lệ
+        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            Notifications.getInstance().show(Notifications.Type.WARNING, "Email không hợp lệ");
+            txtEmail.requestFocus();
+            return false;
+        }
+
+        // Kiểm tra số điện thoại hợp lệ
+        Notifications.getInstance().show(Notifications.Type.SUCCESS, "Dữ liệu hợp lệ");
+        return true;
+    }
+
+    CustomerModel getCustomerFromInput() {
+        CustomerModel custm = new CustomerModel();
+        custm.setId(txtMa.getText());
+        custm.setTen(txtTen.getText().trim());
+        custm.setDiachi(txtDiaChi.getText().trim());
+        custm.setSdt(txtSDT.getText().trim());
+        custm.setEmail(txtEmail.getText().trim());
+        custm.setGioiTinh(rdoNam.isSelected() ? "Nam" : "Nữ");
+        String TrangThai = "Hoạt Động";
+        custm.setTrangThai(TrangThai);
+        return custm;
+    }
+
+    private void clearForm() {
+        txtMa.setText("");
+        txtEmail.setText("");
+        txtTen.setText("");
+        txtDiaChi.setText("");
+        txtSDT.setText("");
+
+    }
+
+    private void updateTable(List<CustomerModel> customerModel) {
+        model.setRowCount(0);
+        for (int i = 0; i < customerModel.size(); i++) {
+            CustomerModel customerModell = customerModel.get(i);
+            customerModell.setStt(i + 1);
+            model.addRow(customerModell.toData());
+        }
     }
 
     /**
@@ -27,6 +170,7 @@ public class CustomerNew extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -111,7 +255,7 @@ public class CustomerNew extends javax.swing.JDialog {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 731, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 743, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jLabel9)
@@ -156,6 +300,7 @@ public class CustomerNew extends javax.swing.JDialog {
 
         txtTen.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
+        buttonGroup1.add(rdoNam);
         rdoNam.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         rdoNam.setSelected(true);
         rdoNam.setText("Nam");
@@ -163,6 +308,7 @@ public class CustomerNew extends javax.swing.JDialog {
         jLabel6.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel6.setText("Email:");
 
+        buttonGroup1.add(rdoNu);
         rdoNu.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         rdoNu.setText("Nữ");
 
@@ -225,7 +371,7 @@ public class CustomerNew extends javax.swing.JDialog {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)))))
-                .addGap(32, 124, Short.MAX_VALUE))
+                .addGap(32, 136, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -275,10 +421,7 @@ public class CustomerNew extends javax.swing.JDialog {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jTabbedPane1)
-                .addContainerGap())
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 493, Short.MAX_VALUE)
         );
 
         pack();
@@ -293,19 +436,58 @@ public class CustomerNew extends javax.swing.JDialog {
     }//GEN-LAST:event_tblKHMousePressed
 
     private void btnChonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChonActionPerformed
-
+        chonKH();
     }//GEN-LAST:event_btnChonActionPerformed
 
     private void txtSearchKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchKeyReleased
-
+        String keyword = txtSearch.getText().trim().toLowerCase();
+        List<CustomerModel> searchResult = customerService.searchCustomerSDT(keyword);
+        if (searchResult.isEmpty()) {
+            Notifications.getInstance().show(Notifications.Type.INFO, "Không tìm thấy Khách Hàng phù hợp");
+            // Nếu không tìm thấy, giữ nguyên dữ liệu hiện tại
+        } else {
+            updateTable(searchResult);
+        }
     }//GEN-LAST:event_txtSearchKeyReleased
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-
+        clearForm();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void btnThemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnThemActionPerformed
+        if (validateInput()) {
+            // Kiểm tra ID đã tồn tại
+            if (customerService.checkTrungID(txtMa.getText())) {
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Mã Khách Hàng đã tồn tại");
+                txtMa.requestFocus();
+                return;
+            }
 
+            // Kiểm tra email đã tồn tại
+            if (customerService.checkTrungEmail(txtEmail.getText())) {
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Email đã tồn tại");
+                txtEmail.requestFocus();
+                return;
+            }
+
+            // Kiểm tra số điện thoại đã tồn tại
+            if (customerService.checkTrungSDT(txtSDT.getText())) {
+                Notifications.getInstance().show(Notifications.Type.WARNING, "Số điện thoại đã tồn tại");
+                txtSDT.requestFocus();
+                return;
+            }
+            String newID = customerService.getNewCustomerID();
+            CustomerModel customerModel = this.getCustomerFromInput();
+            customerModel.setId(newID);
+            if (customerService.insert(customerModel) > 0) {
+                Notifications.getInstance().show(Notifications.Type.SUCCESS, "Thêm Khách Hàng thành công");
+
+                FIllTable(); // Cập nhật lại bảng dữ liệu
+                clearForm();
+            } else {
+                Notifications.getInstance().show(Notifications.Type.ERROR, "Thêm Khách Hàng thất bại");
+            }
+        }
     }//GEN-LAST:event_btnThemActionPerformed
 
     /**
@@ -334,11 +516,12 @@ public class CustomerNew extends javax.swing.JDialog {
             java.util.logging.Logger.getLogger(CustomerNew.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+        //</editor-fold>
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                CustomerNew dialog = new CustomerNew(new javax.swing.JFrame(), true);
+                CustomerNew dialog = new CustomerNew((Sell) new javax.swing.JPanel(), true);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -353,6 +536,7 @@ public class CustomerNew extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnChon;
     private javax.swing.JButton btnThem;
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

@@ -15,7 +15,10 @@ import app.service.ProductDetailService;
 import app.service.ProductsService;
 import app.service.SizeService;
 import app.tabbed.TabbedForm;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.RowFilter;
@@ -584,10 +587,14 @@ public class ProductAttributes extends TabbedForm {
             if (!checkForm()) {
                 return;
             }
-            if (thrs.checkTrungID(txtMaTT.getText().trim())) {
-                Notifications.getInstance().show(Notifications.Type.INFO,"Mã thuộc tính đã tồn tại!");
-                txtMaTT.requestFocus();
-                return;
+            try {
+                if (thrs.checkTrungID(txtMaTT.getText().trim())) {
+                    Notifications.getInstance().show(Notifications.Type.INFO,"Mã thuộc tính đã tồn tại!");
+                    txtMaTT.requestFocus();
+                    return;
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(ProductAttributes.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (thrs.checkTrungTen(txtTenTT.getText().trim())) {
                 Notifications.getInstance().show(Notifications.Type.INFO,"Tên thuộc tính đã tồn tại!");

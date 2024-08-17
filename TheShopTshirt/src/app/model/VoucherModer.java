@@ -130,7 +130,7 @@ public class VoucherModer {
             this.tenVoucher,
             this.soLuong,
             this.loaiVoucher,
-            this.mucGiamGia,
+            this.mucGiamGia.stripTrailingZeros().toPlainString(),
             this.moTa,
             this.ngayBatDau,
             this.ngayKetThuc,

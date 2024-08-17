@@ -50,9 +50,9 @@ public class VoucherService {
         }
     }
 
-    // Phương thức cập nhật trạng thái voucher thành "Không hoạt động" nếu ngày kết thúc nhỏ hơn ngày hiện tại
+    // Phương thức cập nhật trạng thái voucher thành "Ngưng hoạt động" nếu ngày kết thúc nhỏ hơn ngày hiện tại
     public int updateStatusVoucher() {
-        sql = "UPDATE VOUCHER SET TrangThai = N'Không hoạt động' WHERE NgayKetThuc < GETDATE()";
+        sql = "UPDATE VOUCHER SET TrangThai = N'Ngưng Hoạt Động' WHERE NgayKetThuc < GETDATE()";
         try {
             con = DBConnect.getConnection();
             ps = con.prepareStatement(sql);
@@ -90,7 +90,7 @@ public class VoucherService {
 
     // Phương thức cập nhật trạng thái voucher thành "Không hoạt động" nếu số lượng bằng 0
     public int updateVoucherStatusByQuantity() {
-        sql = "UPDATE VOUCHER SET TrangThai = N'Không hoạt động' WHERE SoLuong = 0";
+        sql = "UPDATE VOUCHER SET TrangThai = N'Ngưng hoạt động' WHERE SoLuong = 0";
         try {
             con = DBConnect.getConnection();
             ps = con.prepareStatement(sql);

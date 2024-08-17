@@ -5,9 +5,9 @@ import app.model.StaffModel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class StaffService {
 
@@ -39,7 +39,8 @@ public class StaffService {
                 listStaff.add(staff);
             }
             return listStaff;
-        } catch (SQLException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
@@ -116,20 +117,12 @@ public class StaffService {
     }
 
     public String getNewStaffID() {
-        String newID = "NV01";
-        try {
-            sql = "SELECT MAX(CAST(SUBSTRING(ID, 3, LEN(ID)) AS INT)) AS maxID FROM NHANVIEN";
-            con = DBConnect.getConnection();
-            ps = con.prepareStatement(sql);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                int maxID = rs.getInt("maxID");
-                maxID++;
-                newID = "NV" + String.format("%02d", maxID);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        String newID;
+        boolean unique = false;
+        do {
+            newID = "NV" + UUID.randomUUID().toString().substring(0, 8); // Tạo UUID và rút ngắn
+            unique = !checkTrungMa(newID); // Kiểm tra xem ID đã tồn tại hay chưa
+        } while (!unique); // Tiếp tục cho đến khi tìm được ID không trùng lặp
         return newID;
     }
 

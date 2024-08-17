@@ -9,8 +9,10 @@ import app.model.SizeModel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -106,40 +108,12 @@ public class SizeService {
     }
 
     public String getNewIDKC() {
-        // Mã sản phẩm mặc định
-        String newID = "S001";
-        try {
-            // Truy vấn SQL để lấy số thứ tự lớn nhất của mã sản phẩm từ cơ sở dữ liệu
-            sql = "SELECT MAX(CAST(SUBSTRING(ID, 3, LEN(ID)) AS INT)) AS maxID FROM SIZE";
-            // trong truy vấn SQL, MAX(CAST(SUBSTRING(ID, 3, LEN(ID)) AS INT)) được sử dụng
-            // để lấy số thứ tự lớn nhất của các mã sản phẩm trong cơ sở dữ liệu.
-            // SUBSTRING(ID, 3, LEN(ID)) được sử dụng để cắt bỏ ba ký tự đầu tiên của mã
-            // chất
-            // liệu (trong trường hợp này là "S"),
-            // sau đó chuyển thành kiểu số nguyên bằng CAST.
-            // Kết nối đến cơ sở dữ liệu
-            con = DBConnect.getConnection();
-            // Tạo đối tượng PreparedStatement từ truy vấn SQL
-            ps = con.prepareStatement(sql);
-            // Thực hiện truy vấn và lưu kết quả vào ResultSet
-            rs = ps.executeQuery();
-            // Kiểm tra xem ResultSet có kết quả hay không
-            if (rs.next()) {
-                // Nếu có kết quả, lấy giá trị số thứ tự lớn nhất từ cột "maxID"
-                int maxID = rs.getInt("maxID");
-                // Tăng giá trị số thứ tự lên một đơn vị
-                maxID++;
-                // Tạo mã mới từ số thứ tự lớn nhất và định dạng lại để có hai chữ số
-                newID = "S" + String.format("%03d", maxID);
-                // %03d là định dạng cho số nguyên với độ dài tối thiểu là 3 chữ số. Điều này
-                // đảm bảo rằng số thứ tự sẽ được đặt sau chuỗi "CL" và luôn có ít nhất 3 chữ
-                // số, được điền bằng số 0 nếu cần.
-            }
-        } catch (Exception e) {
-            // Xử lý ngoại lệ nếu có lỗi xảy ra
-            e.printStackTrace();
-        }
-        // Trả về mã sản phẩm mới hoặc mã mặc định nếu có lỗi xảy ra
+        String newID;
+        boolean unique = false;
+        do {
+            newID = "S" + UUID.randomUUID().toString().substring(0, 8); // Tạo UUID và rút ngắn
+            unique = !checkTrungID(newID); // Kiểm tra xem ID đã tồn tại hay chưa
+        } while (!unique); // Tiếp tục cho đến khi tìm được ID không trùng lặp
         return newID;
     }
 

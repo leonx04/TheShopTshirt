@@ -18,13 +18,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.UUID;
 
 /**
  *
  * @author ADMIN
  */
 public class BillDetailService {
+
     Connection con = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
@@ -110,20 +111,29 @@ public class BillDetailService {
         }
     }
 
-    public String getNewHDCTByID() {
-        String newID = "HDCT01";
-        try {
-            sql = "SELECT MAX(CAST(SUBSTRING(ID, 5, LEN(ID)) AS INT)) AS maxID FROM HOADONCHITIET";
-            con = DBConnect.getConnection();
-            ps = con.prepareStatement(sql);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                int maxID = rs.getInt("maxID");
-                maxID++;
-                newID = "HDCT" + String.format("%02d", maxID);
+    public boolean checkTrungID(String id) {
+        String sql = "SELECT COUNT(*) AS count FROM HOADONCHITIET WHERE ID = ?";
+        try (Connection con = DBConnect.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt("count");
+                    // Nếu count > 0, tức là ID đã tồn tại
+                    return count > 0;
+                }
             }
         } catch (SQLException e) {
         }
+        return false; // Nếu không có bản ghi nào khớp hoặc có lỗi xảy ra
+    }
+
+    public String getNewHDCTByID() {
+        String newID;
+        boolean unique = false;
+        do {
+            newID = "S" + UUID.randomUUID().toString().substring(0, 8); // Tạo UUID và rút ngắn
+            unique = !checkTrungID(newID); // Kiểm tra xem ID đã tồn tại hay chưa
+        } while (!unique); // Tiếp tục cho đến khi tìm được ID không trùng lặp
         return newID;
     }
 
@@ -181,5 +191,4 @@ public class BillDetailService {
         }
     }
 
-    
 }

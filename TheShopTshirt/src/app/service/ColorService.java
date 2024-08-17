@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  *
@@ -117,21 +118,12 @@ public class ColorService {
     }
 
     public String getNewIDMS() {
-        // Mã sản phẩm mặc định
-        String newID = "MS001";
-        try {
-            sql = "SELECT MAX(CAST(SUBSTRING(ID, 4, LEN(ID)) AS INT)) AS maxID FROM MAUSAC";
-            con = DBConnect.getConnection();
-            ps = con.prepareStatement(sql);
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                int maxID = rs.getInt("maxID");
-                maxID++;
-                newID = "MS" + String.format("%03d", maxID);
-            }
-        } catch (SQLException e) {
-        }
+        String newID;
+        boolean unique = false;
+        do {
+            newID = "MS" + UUID.randomUUID().toString().substring(0, 8); // Tạo UUID và rút ngắn
+            unique = !checkTrungID(newID); // Kiểm tra xem ID đã tồn tại hay chưa
+        } while (!unique); // Tiếp tục cho đến khi tìm được ID không trùng lặp
         return newID;
     }
 

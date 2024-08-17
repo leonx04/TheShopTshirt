@@ -88,10 +88,10 @@ public class Login extends JPanel { // Kế thừa JPanel để tạo giao diệ
             }
         });
 
-        txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your email"); // Thiết lập văn bản gợi ý cho trường tên người dùng
+        txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your username or email"); // Thiết lập văn bản gợi ý cho trường tên người dùng
         txtPassword.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your password"); // Thiết lập văn bản gợi ý cho trường mật khẩu
 
-        JLabel lbTitle = new JLabel("Welcome - The Shop Tshirt "); // Khởi tạo nhãn tiêu đề
+        JLabel lbTitle = new JLabel("Welcome - Tshirt "); // Khởi tạo nhãn tiêu đề
         JLabel description = new JLabel("Please sign in to access your account"); // Khởi tạo nhãn mô tả
         lbTitle.putClientProperty(FlatClientProperties.STYLE, "" // Thiết lập thuộc tính giao diện cho nhãn tiêu đề
                 + "font:bold +10");

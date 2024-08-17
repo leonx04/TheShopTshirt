@@ -23,7 +23,6 @@ public final class Bill extends TabbedForm {
     
     @Override
     public void fromRefresh() {
-        // Tải lại dữ liệu cho form Bill
         this.fillTable(hdsr.getAll());
     }
 
